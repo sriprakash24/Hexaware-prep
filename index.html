@@ -485,10 +485,12 @@ let userProgress = {};
 let extraQuestions = [];
 let customTabs = [];       // user-created tabs from Firestore
 let dailyQuestions = [];   // daily practice questions from Firestore
+let myDailyAttempts = {};  // { questionId: { answered, correct, userAnswer, attempts, ... } } for current user
 let unsubProgress = null;
 let unsubExtra = null;
 let unsubTabs = null;
 let unsubDaily = null;
+let unsubMyDailyAttempts = null;
 let uploadOpen = true;
 let dailyMode = false;     // are we in Daily Practice mode?
 
@@ -497,6 +499,10 @@ const ADMIN_USER = "admin";
 let viewingUser = null;          // null = admin viewing own, string = impersonating a user
 let allUsersProgress = {};       // { username: { qid: true, ... } }
 let unsubAllUsers = null;        // listener for all progress docs
+let allUsersRegistry = {};       // { username: { displayName, lastSeen } } from "users" collection
+let unsubAllUsersRegistry = null;
+let allUsersDailyAttempts = {};  // { "username_qid": { ...attempt } } from "dailyAttempts" collection
+let unsubAllDailyAttempts = null;
 
 // ── LOGIN ────────────────────────────────────
 document.getElementById("nameInput").addEventListener("keydown", e => {
@@ -510,6 +516,14 @@ function doLogin() {
   localStorage.setItem("hexPrep_user", name);
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("userBadge").textContent = (currentUser === ADMIN_USER ? "👑 " : "👤 ") + name;
+  // Register this user so admin can see them even if they never mark a question done
+  if(currentUser !== ADMIN_USER) {
+    db.collection("users").doc(currentUser).set({
+      username: currentUser,
+      displayName: name,
+      lastSeen: Date.now()
+    }, { merge: true });
+  }
   subscribeToFirebase();
   if(currentUser === ADMIN_USER) subscribeAdminData();
   renderAll();
@@ -520,7 +534,13 @@ function doLogout() {
   if(unsubExtra) unsubExtra();
   if(unsubTabs) unsubTabs();
   if(unsubDaily) unsubDaily();
+  if(unsubMyDailyAttempts) { unsubMyDailyAttempts(); unsubMyDailyAttempts = null; }
   if(unsubAllUsers) { unsubAllUsers(); unsubAllUsers = null; }
+  if(unsubAllUsersRegistry) { unsubAllUsersRegistry(); unsubAllUsersRegistry = null; }
+  if(unsubAllDailyAttempts) { unsubAllDailyAttempts(); unsubAllDailyAttempts = null; }
+  allUsersRegistry = {};
+  allUsersDailyAttempts = {};
+  myDailyAttempts = {};
   currentUser = null; viewingUser = null; userProgress = {};
   extraQuestions = []; customTabs = []; dailyQuestions = [];
   allUsersProgress = {};
@@ -586,6 +606,18 @@ function subscribeToFirebase() {
       dailyQuestions = snap.docs.map(d => d.data());
       if(dailyMode) renderDailyMode();
     });
+
+  // This user's daily attempts (persisted per user)
+  unsubMyDailyAttempts = db.collection("dailyAttempts")
+    .where("username", "==", currentUser)
+    .onSnapshot(snap => {
+      myDailyAttempts = {};
+      snap.docs.forEach(d => {
+        const a = d.data();
+        myDailyAttempts[a.questionId] = a;
+      });
+      if(dailyMode) renderDailyMode();
+    });
 }
 
 function saveProgress(qid, done) {
@@ -610,7 +642,7 @@ function deleteExtraQuestion(qid) {
 
 // ── ADMIN FUNCTIONS ──────────────────────────
 function subscribeAdminData() {
-  // Listen to ALL progress documents to get list of users + their data
+  // Listen to ALL progress documents to get per-user done counts
   unsubAllUsers = db.collection("progress")
     .onSnapshot(snap => {
       allUsersProgress = {};
@@ -618,11 +650,35 @@ function subscribeAdminData() {
       renderAdminBar();
       renderAdminPanel();
     });
+
+  // Listen to users registry — everyone who has ever logged in
+  unsubAllUsersRegistry = db.collection("users")
+    .onSnapshot(snap => {
+      allUsersRegistry = {};
+      snap.docs.forEach(d => { allUsersRegistry[d.id] = d.data() || {}; });
+      renderAdminBar();
+      renderAdminPanel();
+    });
+
+  // Listen to all daily attempts — so admin can see per-user daily practice
+  unsubAllDailyAttempts = db.collection("dailyAttempts")
+    .onSnapshot(snap => {
+      allUsersDailyAttempts = {};
+      snap.docs.forEach(d => { allUsersDailyAttempts[d.id] = d.data() || {}; });
+      // Always re-render daily mode for admin so table stays live
+      if(currentUser === ADMIN_USER) {
+        if(dailyMode) renderDailyMode();
+        else renderAdminPanel(); // update progress counts even outside daily mode
+      }
+    });
 }
 
 function getKnownUsers() {
-  // All users who have a progress doc (excludes admin itself for cleanliness)
-  return Object.keys(allUsersProgress).filter(u => u !== ADMIN_USER).sort();
+  // Merge registry (everyone who logged in) with progress docs, exclude admin
+  const fromRegistry = Object.keys(allUsersRegistry).filter(u => u !== ADMIN_USER);
+  const fromProgress = Object.keys(allUsersProgress).filter(u => u !== ADMIN_USER);
+  const all = new Set([...fromRegistry, ...fromProgress]);
+  return [...all].sort();
 }
 
 function renderAdminBar() {
@@ -687,7 +743,7 @@ function renderAdminPanel() {
   panel.style.display = "block";
 
   const users = getKnownUsers();
-  const allQs = [...BUILT_IN, ...extraQuestions];
+  const allQs = [...BUILT_IN, ...extraQuestions, ...dailyQuestions];
   const total = allQs.length;
 
   if(!users.length) {
@@ -704,10 +760,17 @@ function renderAdminPanel() {
     const prog = allUsersProgress[u] || {};
     const done = Object.keys(prog).length;
     const pct = total ? Math.round(done/total*100) : 0;
-    const displayName = u.replace(/_/g," ");
+    const reg = allUsersRegistry[u] || {};
+    const displayName = (reg.displayName || u).replace(/_/g," ");
     const isViewing = viewingUser === u;
+    const lastSeenStr = reg.lastSeen
+      ? new Date(reg.lastSeen).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})
+      : "—";
     return `<tr>
-      <td><span class="user-chip-inline">👤 ${esc(displayName)}</span></td>
+      <td>
+        <span class="user-chip-inline">👤 ${esc(displayName)}</span>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:3px">🕐 ${lastSeenStr}</div>
+      </td>
       <td>
         <div style="display:flex;align-items:center;gap:6px">
           <div class="progress-mini"><div class="progress-mini-fill" style="width:${pct}%"></div></div>
@@ -740,9 +803,22 @@ function renderAdminPanel() {
 }
 
 function adminDeleteUser(username) {
-  const displayName = username.replace(/_/g," ");
-  if(!confirm(`Delete all progress data for "${displayName}"? This cannot be undone.`)) return;
-  db.collection("progress").doc(username).delete().then(() => {
+  const reg = allUsersRegistry[username] || {};
+  const displayName = (reg.displayName || username).replace(/_/g," ");
+  if(!confirm(`Delete all data for "${displayName}"? This cannot be undone.`)) return;
+
+  // Also delete all daily attempt docs for this user
+  const userAttemptKeys = Object.keys(allUsersDailyAttempts)
+    .filter(k => allUsersDailyAttempts[k].username === username);
+
+  const batch = db.batch();
+  userAttemptKeys.forEach(k => batch.delete(db.collection("dailyAttempts").doc(k)));
+
+  Promise.all([
+    db.collection("progress").doc(username).delete(),
+    db.collection("users").doc(username).delete(),
+    batch.commit()
+  ]).then(() => {
     if(viewingUser === username) adminSwitchUser(null);
     alert(`User "${displayName}" deleted.`);
   });
@@ -764,9 +840,10 @@ function renderTabs() {
     `<button class="tab-btn" onclick="promptNewTab()" style="color:var(--green);border-bottom:none">
       ＋ New Tab</button>`;
 
-  // Global progress bar
-  const total = all.length;
-  const done = all.filter(q => userProgress[q.id]).length;
+  // Global progress bar — includes daily practice questions
+  const allWithDaily = [...all, ...dailyQuestions];
+  const total = allWithDaily.length;
+  const done = allWithDaily.filter(q => userProgress[q.id]).length;
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById("globalBar").style.width = pct+"%";
   document.getElementById("globalLbl").textContent = `${done} / ${total} done`;
@@ -791,10 +868,11 @@ function promptNewTab() {
 // ── DAILY PRACTICE MODE ──────────────────────
 function enterDailyMode() {
   dailyMode = true;
-  if(currentUser === ADMIN_USER) {
-    document.getElementById("adminPanel").style.display = "none";
-  }
   renderAll();
+  // For admin: force re-render after short delay to ensure allUsersDailyAttempts is populated
+  if(currentUser === ADMIN_USER) {
+    setTimeout(() => { if(dailyMode) renderDailyMode(); }, 800);
+  }
 }
 
 function renderAll() {
@@ -838,9 +916,26 @@ function renderDailyMode() {
   document.getElementById("filterBar").innerHTML = "";
   document.getElementById("subtopicBar").innerHTML = "";
 
+  // --- Merge saved attempts from Firestore into questions ---
+  // This makes data persist across logout/login
+  const mergedQuestions = dailyQuestions.map(q => {
+    const saved = myDailyAttempts[q.id];
+    if(saved) {
+      return {
+        ...q,
+        _answered: saved.answered,
+        _correct: saved.correct,
+        _userAns: saved.userAnswer,
+        _attempts: saved.attempts,
+        _outOfAttempts: saved.outOfAttempts || false
+      };
+    }
+    return q;
+  });
+
   // --- Group questions by date ---
   const groups = {}; // { "YYYY-MM-DD": [q, ...] }
-  dailyQuestions.forEach(q => {
+  mergedQuestions.forEach(q => {
     const dk = q.date || getDateKey(q.ts || Date.now());
     if(!groups[dk]) groups[dk] = [];
     groups[dk].push(q);
@@ -856,7 +951,7 @@ function renderDailyMode() {
 
   // Compute stats for selected date
   const selectedQs = groups[selectedDailyDate] || [];
-  const totalAll = dailyQuestions.length;
+  const totalAll = mergedQuestions.length;
   let correct=0, wrong=0, attempted=0;
   selectedQs.forEach(q => {
     if(q._answered) { attempted++; if(q._correct) correct++; else wrong++; }
@@ -1018,6 +1113,73 @@ function renderDailyMode() {
     </div>`;
 
   area.innerHTML = dateBar + dateHeading + cards;
+
+  // ── ADMIN: show all users' attempts for this date ──
+  if(currentUser === ADMIN_USER) {
+    // Filter attempts for selected date
+    const dateAttempts = Object.values(allUsersDailyAttempts)
+      .filter(a => a.date === selectedDailyDate);
+
+    let adminHtml = `
+      <div class="admin-panel" style="margin-top:20px">
+        <div class="admin-panel-header">
+          <div class="admin-panel-title">👑 User Daily Attempts — ${formatDateDisplay(selectedDailyDate)}</div>
+        </div>`;
+
+    if(!dateAttempts.length) {
+      adminHtml += `<div style="color:var(--muted);font-size:0.82rem;padding:8px 0">⏳ No users have attempted daily questions on this date yet.</div>`;
+    } else {
+      // Group by username
+      const byUser = {};
+      dateAttempts.forEach(a => {
+        if(!byUser[a.username]) byUser[a.username] = [];
+        byUser[a.username].push(a);
+      });
+
+      Object.keys(byUser).sort().forEach(u => {
+        const reg = allUsersRegistry[u] || {};
+        const displayName = (reg.displayName || u).replace(/_/g," ");
+        const attempts = byUser[u];
+        const correct = attempts.filter(a => a.correct).length;
+        const wrong = attempts.filter(a => a.answered && !a.correct).length;
+        const pending = attempts.filter(a => !a.answered).length;
+
+        adminHtml += `
+          <div style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="background:rgba(79,127,255,0.08);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+              <span class="user-chip-inline">👤 ${esc(displayName)}</span>
+              <span style="font-size:0.75rem;color:var(--green);font-weight:600">✅ ${correct} correct</span>
+              <span style="font-size:0.75rem;color:var(--red);font-weight:600">❌ ${wrong} wrong</span>
+              ${pending ? `<span style="font-size:0.75rem;color:var(--muted)">⏳ ${pending} pending</span>` : ''}
+            </div>
+            <div style="padding:10px;display:flex;flex-direction:column;gap:8px">
+              ${attempts.map((a, i) => {
+                const resultColor = a.answered ? (a.correct ? 'var(--green)' : 'var(--red)') : 'var(--accent)';
+                const resultLabel = a.answered
+                  ? (a.correct ? '✅ Correct' : (a.outOfAttempts ? '❌ Out of attempts' : '❌ Wrong'))
+                  : '⏳ In progress';
+                const resultBg = a.answered
+                  ? (a.correct ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)')
+                  : 'rgba(79,127,255,0.08)';
+                return `<div style="background:${resultBg};border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">
+                    <span style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase">Q${i+1}</span>
+                    <span style="font-size:0.72rem;font-weight:600;color:${resultColor}">${resultLabel}</span>
+                    <span style="font-size:0.68rem;color:var(--muted)">${a.attempts||0}/${MAX_DAILY_ATTEMPTS} attempts</span>
+                  </div>
+                  <div style="font-size:0.78rem;color:var(--text);background:rgba(0,0,0,0.2);border-radius:6px;padding:6px 8px;margin-bottom:6px;white-space:pre-wrap;word-break:break-word">${esc((a.question||"").slice(0,120))}${(a.question||"").length>120?'…':''}</div>
+                  <div style="font-size:0.7rem;color:var(--muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em">Their answer</div>
+                  <div style="font-size:0.8rem;color:var(--text);font-family:monospace;background:rgba(0,0,0,0.15);border-radius:6px;padding:5px 8px;word-break:break-word">${esc(a.userAnswer||"—")}</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      });
+    }
+
+    adminHtml += `</div>`;
+    area.innerHTML += adminHtml;
+  }
 }
 
 function setDailyDate(d) {
@@ -1063,25 +1225,45 @@ function checkDailyQ(id) {
   if(q.answer) {
     isCorrect = userAns.trim().toLowerCase() === q.answer.trim().toLowerCase();
   } else {
-    // No expected answer — just mark as attempted
+    // No expected answer — treat as correct (free-form practice)
     isCorrect = true;
   }
 
-  q._attempts = (q._attempts || 0) + 1;
-  q._userAns = userAns;
+  // Get current attempt count from saved state
+  const prev = myDailyAttempts[id] || {};
+  const attempts = (prev.attempts || 0) + 1;
 
+  let answered, correct, outOfAttempts;
   if(isCorrect) {
-    // Correct — lock immediately and reveal answer
-    q._answered = true; q._correct = true; q._outOfAttempts = false;
-  } else if(q._attempts >= MAX_DAILY_ATTEMPTS) {
-    // Out of attempts — lock and reveal answer, marked incorrect
-    q._answered = true; q._correct = false; q._outOfAttempts = true;
+    answered = true; correct = true; outOfAttempts = false;
+  } else if(attempts >= MAX_DAILY_ATTEMPTS) {
+    answered = true; correct = false; outOfAttempts = true;
   } else {
-    // Wrong, but attempts remain — stay unlocked, no answer shown
-    q._answered = false; q._correct = false; q._outOfAttempts = false;
+    answered = false; correct = false; outOfAttempts = false;
   }
 
-  // Store result locally (not in Firestore — daily is rough work)
+  // Update local cache immediately
+  myDailyAttempts[id] = {
+    username: currentUser,
+    questionId: id,
+    question: q.q,
+    date: q.date || getDateKey(q.ts || Date.now()),
+    userAnswer: userAns,
+    correct,
+    answered,
+    outOfAttempts,
+    attempts,
+    ts: Date.now()
+  };
+
+  // ── Always persist to Firestore (every attempt, not just final) ──
+  db.collection("dailyAttempts").doc(currentUser + "_" + id).set(myDailyAttempts[id]);
+
+  // ── Link to progress on EVERY attempt (not just when fully answered) ──
+  // This way admin always sees daily activity in progress bar
+  userProgress[id] = true;
+  saveProgress(id, true);
+
   renderDailyMode();
 }
 
@@ -1286,59 +1468,4 @@ function openEdit(id) {
   if(!q) return;
   document.getElementById("editId").value = id;
   document.getElementById("editQ").value = q.q||"";
-  document.getElementById("editOpts").value = q.options ? q.options.join("\n") : "";
-  document.getElementById("editAns").value = q.answer||"";
-  document.getElementById("editSub").value = q.subtopic||"";
-  document.getElementById("editSrc").value = q.source||"";
-  document.getElementById("editModal").style.display = "flex";
-}
-
-function closeEditModal(e) {
-  if(!e || e.target===document.getElementById("editModal"))
-    document.getElementById("editModal").style.display = "none";
-}
-
-function saveEdit() {
-  const id = document.getElementById("editId").value;
-  const all = getAllQ();
-  const orig = all.find(x=>x.id===id);
-  if(!orig) return;
-  const optsRaw = document.getElementById("editOpts").value.trim();
-  const options = optsRaw ? optsRaw.split("\n").map(s=>s.trim()).filter(Boolean) : null;
-  const updated = {
-    ...orig,
-    q: document.getElementById("editQ").value.trim(),
-    answer: document.getElementById("editAns").value.trim(),
-    subtopic: document.getElementById("editSub").value.trim()||orig.subtopic,
-    source: document.getElementById("editSrc").value.trim()||orig.source,
-  };
-  if(options && options.length) updated.options=options; else delete updated.options;
-  // For built-in questions, save as custom override with same id
-  saveExtraQuestion(updated);
-  document.getElementById("editModal").style.display = "none";
-}
-
-function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-
-function toggleAns(id){
-  const c=document.getElementById("card_"+id);
-  if(!c)return;
-  c.classList.toggle("show-ans");
-  const b=c.querySelector(".btn-ans");
-  if(b) b.textContent=c.classList.contains("show-ans")?"🙈 Hide":"💡 Answer";
-}
-
-function toggleDone(id){
-  const done=!userProgress[id];
-  if(done) userProgress[id]=true; else delete userProgress[id];
-  saveProgress(id,done);
-  renderAll();
-}
-
-function delQ(id){
-  if(!confirm("Delete this question for everyone?")) return;
-  deleteExtraQuestion(id);
-}
-</script>
-</body>
-</html>
+  document.getElementById("editOpts").value = q.options 
