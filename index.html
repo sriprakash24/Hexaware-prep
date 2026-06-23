@@ -300,6 +300,7 @@ function doLogin() {
   const name = document.getElementById("nameInput").value.trim();
   if(!name) { document.getElementById("loginErr").textContent = "Please enter your name!"; return; }
   currentUser = name.toLowerCase().replace(/\s+/g,"_");
+  localStorage.setItem("hexPrep_user", name); // save name across refreshes
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("userBadge").textContent = "👤 " + name;
   subscribeToFirebase();
@@ -310,9 +311,23 @@ function doLogout() {
   if(unsubProgress) unsubProgress();
   if(unsubExtra) unsubExtra();
   currentUser = null; userProgress = {}; extraQuestions = [];
+  localStorage.removeItem("hexPrep_user"); // clear saved name on logout
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("nameInput").value = "";
 }
+
+// ── AUTO-LOGIN ON REFRESH ─────────────────────
+(function autoLogin() {
+  const saved = localStorage.getItem("hexPrep_user");
+  if(saved) {
+    currentUser = saved.toLowerCase().replace(/\s+/g,"_");
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("userBadge").textContent = "👤 " + saved;
+    document.getElementById("nameInput").value = saved;
+    subscribeToFirebase();
+    renderAll();
+  }
+})();
 
 // ── FIREBASE SYNC ────────────────────────────
 function setSyncing(on) {
@@ -509,3 +524,4 @@ function delQ(id){
 </script>
 </body>
 </html>
+
