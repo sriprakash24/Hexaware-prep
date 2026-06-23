@@ -106,6 +106,38 @@
   .q-card.done .btn-done-q{background:var(--green);color:#0d1a0d;}
   .btn-del{border-color:var(--red)!important;color:var(--red)!important;}
 
+  /* ── ADMIN USER BAR ── */
+  #adminUserBar{background:linear-gradient(90deg,#0d1230,#1a1e30);border-bottom:2px solid var(--accent);padding:6px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;overflow-x:auto;}
+  #adminUserBar::-webkit-scrollbar{height:3px;}
+  #adminUserBar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .admin-bar-label{font-size:0.66rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;white-space:nowrap;}
+  .admin-user-chip{padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .admin-user-chip:hover{border-color:var(--accent);color:var(--accent);}
+  .admin-user-chip.viewing{background:rgba(79,127,255,0.15);border-color:var(--accent);color:var(--accent);}
+  .admin-user-chip.self-chip{border-color:var(--accent2);color:var(--accent2);}
+  .admin-user-chip.self-chip.viewing{background:rgba(245,166,35,0.15);}
+
+  /* ── ADMIN PANEL ── */
+  .admin-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
+  .admin-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .admin-panel-title{font-family:'Space Grotesk',sans-serif;font-size:1rem;color:var(--accent);display:flex;align-items:center;gap:8px;}
+  .admin-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+  .admin-table th{text-align:left;font-size:0.66rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);}
+  .admin-table td{padding:8px 10px;border-bottom:1px solid rgba(37,42,64,0.5);vertical-align:middle;}
+  .admin-table tr:last-child td{border-bottom:none;}
+  .admin-table tr:hover td{background:rgba(255,255,255,0.02);}
+  .user-chip-inline{background:var(--border);border-radius:20px;padding:3px 10px;font-size:0.73rem;color:var(--text);display:inline-block;}
+  .progress-mini{background:var(--border);border-radius:10px;height:6px;width:80px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px;}
+  .progress-mini-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--green));}
+  .admin-view-btn{padding:3px 10px;border-radius:6px;font-size:0.7rem;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;font-family:'Inter',sans-serif;margin-right:4px;}
+  .admin-view-btn:hover{background:rgba(79,127,255,0.15);}
+  .admin-del-btn{padding:3px 10px;border-radius:6px;font-size:0.7rem;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;}
+  .admin-del-btn:hover{background:rgba(239,68,68,0.1);}
+  .view-mode-banner{background:rgba(79,127,255,0.1);border:1px solid rgba(79,127,255,0.3);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;gap:10px;}
+  .view-mode-banner strong{color:var(--accent);}
+  .btn-exit-view{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:0.75rem;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-exit-view:hover{border-color:var(--accent2);color:var(--accent2);}
+
   .no-qs{color:var(--muted);text-align:center;padding:30px;font-size:0.86rem;}
   .loading-msg{color:var(--muted);text-align:center;padding:40px;font-size:0.9rem;}
 
@@ -266,9 +298,17 @@
   </div>
 </header>
 
+<!-- ADMIN USER BAR (only shown when logged in as admin) -->
+<div id="adminUserBar" style="display:none">
+  <span class="admin-bar-label">👑 Viewing:</span>
+  <div id="adminUserChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+</div>
+
 <div class="tabs-wrap" id="tabsWrap"></div>
 
 <main>
+  <div id="adminPanel" style="display:none"></div>
+  <div id="viewModeBanner" style="display:none"></div>
   <div class="stats-bar" id="statsBar"></div>
   <div id="uploadSection"></div>
   <div class="filter-bar" id="filterBar"></div>
@@ -452,6 +492,12 @@ let unsubDaily = null;
 let uploadOpen = true;
 let dailyMode = false;     // are we in Daily Practice mode?
 
+// ── ADMIN STATE ──────────────────────────────
+const ADMIN_USER = "admin";
+let viewingUser = null;          // null = admin viewing own, string = impersonating a user
+let allUsersProgress = {};       // { username: { qid: true, ... } }
+let unsubAllUsers = null;        // listener for all progress docs
+
 // ── LOGIN ────────────────────────────────────
 document.getElementById("nameInput").addEventListener("keydown", e => {
   if(e.key === "Enter") doLogin();
@@ -461,10 +507,11 @@ function doLogin() {
   const name = document.getElementById("nameInput").value.trim();
   if(!name) { document.getElementById("loginErr").textContent = "Please enter your name!"; return; }
   currentUser = name.toLowerCase().replace(/\s+/g,"_");
-  localStorage.setItem("hexPrep_user", name); // save name across refreshes
+  localStorage.setItem("hexPrep_user", name);
   document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("userBadge").textContent = "👤 " + name;
+  document.getElementById("userBadge").textContent = (currentUser === ADMIN_USER ? "👑 " : "👤 ") + name;
   subscribeToFirebase();
+  if(currentUser === ADMIN_USER) subscribeAdminData();
   renderAll();
 }
 
@@ -473,12 +520,18 @@ function doLogout() {
   if(unsubExtra) unsubExtra();
   if(unsubTabs) unsubTabs();
   if(unsubDaily) unsubDaily();
-  currentUser = null; userProgress = {}; extraQuestions = []; customTabs = []; dailyQuestions = [];
+  if(unsubAllUsers) { unsubAllUsers(); unsubAllUsers = null; }
+  currentUser = null; viewingUser = null; userProgress = {};
+  extraQuestions = []; customTabs = []; dailyQuestions = [];
+  allUsersProgress = {};
   dailyMode = false;
   TABS = [...BUILT_IN_TABS];
   localStorage.removeItem("hexPrep_user");
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("nameInput").value = "";
+  document.getElementById("adminUserBar").style.display = "none";
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("viewModeBanner").style.display = "none";
 }
 
 // ── AUTO-LOGIN ON REFRESH ─────────────────────
@@ -487,9 +540,10 @@ function doLogout() {
   if(saved) {
     currentUser = saved.toLowerCase().replace(/\s+/g,"_");
     document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("userBadge").textContent = "👤 " + saved;
+    document.getElementById("userBadge").textContent = (currentUser === ADMIN_USER ? "👑 " : "👤 ") + saved;
     document.getElementById("nameInput").value = saved;
     subscribeToFirebase();
+    if(currentUser === ADMIN_USER) subscribeAdminData();
     renderAll();
   }
 })();
@@ -554,6 +608,146 @@ function deleteExtraQuestion(qid) {
   db.collection("questions").doc(qid).delete();
 }
 
+// ── ADMIN FUNCTIONS ──────────────────────────
+function subscribeAdminData() {
+  // Listen to ALL progress documents to get list of users + their data
+  unsubAllUsers = db.collection("progress")
+    .onSnapshot(snap => {
+      allUsersProgress = {};
+      snap.docs.forEach(d => { allUsersProgress[d.id] = d.data() || {}; });
+      renderAdminBar();
+      renderAdminPanel();
+    });
+}
+
+function getKnownUsers() {
+  // All users who have a progress doc (excludes admin itself for cleanliness)
+  return Object.keys(allUsersProgress).filter(u => u !== ADMIN_USER).sort();
+}
+
+function renderAdminBar() {
+  if(currentUser !== ADMIN_USER) return;
+  const bar = document.getElementById("adminUserBar");
+  const chips = document.getElementById("adminUserChips");
+  const users = getKnownUsers();
+  bar.style.display = "flex";
+
+  // "My View" chip (admin's own data)
+  const selfActive = viewingUser === null;
+  let html = `<button class="admin-user-chip self-chip ${selfActive?'viewing':''}" onclick="adminSwitchUser(null)">👑 Admin (me)</button>`;
+
+  users.forEach(u => {
+    const active = viewingUser === u;
+    const displayName = u.replace(/_/g," ");
+    const prog = allUsersProgress[u] || {};
+    const done = Object.keys(prog).length;
+    html += `<button class="admin-user-chip ${active?'viewing':''}" onclick="adminSwitchUser('${u}')">
+      👤 ${esc(displayName)}${done ? ` <span style="font-size:0.62rem;opacity:0.7">(${done}✓)</span>` : ''}
+    </button>`;
+  });
+
+  chips.innerHTML = html;
+}
+
+function adminSwitchUser(username) {
+  viewingUser = username;
+  if(username === null) {
+    // Restore admin's own progress from the snapshot we already have
+    userProgress = { ...(allUsersProgress[ADMIN_USER] || {}) };
+  } else {
+    userProgress = { ...(allUsersProgress[username] || {}) };
+  }
+  renderAdminBar();
+  renderViewModeBanner();
+  renderAdminPanel();
+  renderAll();
+}
+
+function renderViewModeBanner() {
+  const banner = document.getElementById("viewModeBanner");
+  if(currentUser !== ADMIN_USER || viewingUser === null) {
+    banner.style.display = "none";
+    return;
+  }
+  const displayName = viewingUser.replace(/_/g," ");
+  banner.style.display = "flex";
+  banner.innerHTML = `
+    <div class="view-mode-banner">
+      <span>👁 Viewing data for <strong>${esc(displayName)}</strong> — all tabs and scores reflect this user's progress.</span>
+      <button class="btn-exit-view" onclick="adminSwitchUser(null)">✕ Back to my view</button>
+    </div>`;
+}
+
+function renderAdminPanel() {
+  const panel = document.getElementById("adminPanel");
+  if(currentUser !== ADMIN_USER || dailyMode) {
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+
+  const users = getKnownUsers();
+  const allQs = [...BUILT_IN, ...extraQuestions];
+  const total = allQs.length;
+
+  if(!users.length) {
+    panel.innerHTML = `<div class="admin-panel">
+      <div class="admin-panel-header">
+        <div class="admin-panel-title">👑 Admin Panel</div>
+      </div>
+      <div style="color:var(--muted);font-size:0.82rem;padding:10px 0">No other users have logged in yet.</div>
+    </div>`;
+    return;
+  }
+
+  const rows = users.map(u => {
+    const prog = allUsersProgress[u] || {};
+    const done = Object.keys(prog).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const displayName = u.replace(/_/g," ");
+    const isViewing = viewingUser === u;
+    return `<tr>
+      <td><span class="user-chip-inline">👤 ${esc(displayName)}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="progress-mini"><div class="progress-mini-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:0.78rem;color:var(--text)">${done}/${total}</span>
+          <span style="font-size:0.68rem;color:var(--muted)">(${pct}%)</span>
+        </div>
+      </td>
+      <td>
+        <button class="admin-view-btn" onclick="adminSwitchUser('${u}')" ${isViewing?'style="background:rgba(79,127,255,0.15)"':''}>
+          ${isViewing ? '👁 Viewing' : '👁 View'}
+        </button>
+        <button class="admin-del-btn" onclick="adminDeleteUser('${u}')">🗑 Delete</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  panel.innerHTML = `<div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">👑 Admin Panel &nbsp;<span style="font-size:0.72rem;color:var(--muted);font-weight:400">${users.length} user${users.length!==1?'s':''} registered</span></div>
+    </div>
+    <table class="admin-table">
+      <thead><tr>
+        <th>Username</th>
+        <th>Progress</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function adminDeleteUser(username) {
+  const displayName = username.replace(/_/g," ");
+  if(!confirm(`Delete all progress data for "${displayName}"? This cannot be undone.`)) return;
+  db.collection("progress").doc(username).delete().then(() => {
+    if(viewingUser === username) adminSwitchUser(null);
+    alert(`User "${displayName}" deleted.`);
+  });
+}
+
 // ── RENDER ───────────────────────────────────
 function getAllQ() { return [...BUILT_IN, ...extraQuestions]; }
 
@@ -597,11 +791,19 @@ function promptNewTab() {
 // ── DAILY PRACTICE MODE ──────────────────────
 function enterDailyMode() {
   dailyMode = true;
+  if(currentUser === ADMIN_USER) {
+    document.getElementById("adminPanel").style.display = "none";
+  }
   renderAll();
 }
 
 function renderAll() {
   renderTabs();
+  if(currentUser === ADMIN_USER) {
+    renderAdminBar();
+    renderViewModeBanner();
+    renderAdminPanel();
+  }
   if(dailyMode) {
     renderDailyMode();
     return;
