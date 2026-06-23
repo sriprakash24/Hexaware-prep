@@ -109,9 +109,129 @@
   .no-qs{color:var(--muted);text-align:center;padding:30px;font-size:0.86rem;}
   .loading-msg{color:var(--muted);text-align:center;padding:40px;font-size:0.9rem;}
 
+  /* SUBTOPIC TABS */
+  .subtopic-bar{overflow-x:auto;white-space:nowrap;padding:4px 0 10px;margin-bottom:4px;}
+  .subtopic-bar::-webkit-scrollbar{height:3px;}
+  .subtopic-bar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .sub-btn{display:inline-block;padding:4px 12px;font-size:0.74rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:20px;margin-right:6px;font-family:'Inter',sans-serif;transition:all 0.2s;white-space:nowrap;}
+  .sub-btn:hover{color:var(--text);border-color:#3a4060;}
+  .sub-btn.active{border-color:var(--accent2);color:var(--accent2);background:#1e1a0d;}
+  .sub-btn .sub-cnt{font-size:0.62rem;margin-left:3px;opacity:0.7;}
+
+  /* EDIT MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+  .modal-box h3{font-size:0.95rem;margin-bottom:14px;font-family:'Space Grotesk',sans-serif;}
+  .modal-field{margin-bottom:10px;}
+  .modal-field label{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:4px;}
+  .modal-input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.83rem;font-family:'Inter',sans-serif;outline:none;resize:vertical;}
+  .modal-input:focus{border-color:var(--accent);}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+  .btn-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;}
+  .btn-save{padding:7px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;}
+
+  /* IMPROVED UPLOAD */
+  .upload-card{background:var(--card);border:2px dashed var(--border);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .upload-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .upload-toggle h3{font-size:0.9rem;margin:0;}
+  .upload-toggle .toggle-arr{color:var(--muted);font-size:0.8rem;transition:transform 0.2s;}
+  .upload-toggle .toggle-arr.open{transform:rotate(180deg);}
+  .upload-body{margin-top:12px;}
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  @media(max-width:500px){.upload-grid{grid-template-columns:1fr;}}
+  .up-input{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;}
+  .up-input:focus{border-color:var(--accent);}
+  .up-textarea{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;resize:vertical;min-height:60px;box-sizing:border-box;}
+  .up-textarea:focus{border-color:var(--accent);}
+  .up-select{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+  .upload-hint{font-size:0.7rem;color:var(--muted);margin-bottom:8px;}
+  .upload-footer{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+  .btn-add{padding:7px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;}
+  .btn-add:hover{opacity:0.85;}
+  .btn-add-more{padding:7px 14px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;}
+  .added-count{font-size:0.72rem;color:var(--green);}
+
   ::-webkit-scrollbar{width:5px;}
   ::-webkit-scrollbar-track{background:var(--bg);}
   ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+  /* ── DAILY PRACTICE IMPROVEMENTS ── */
+
+  /* Date Selector Bar */
+  .daily-date-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .daily-date-label{font-size:0.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+  .daily-date-input{padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+  .daily-date-input:focus{border-color:var(--accent2);}
+  .daily-date-pills{display:flex;gap:6px;flex-wrap:wrap;}
+  .date-pill{padding:5px 12px;border-radius:20px;font-size:0.73rem;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .date-pill:hover{border-color:var(--accent2);color:var(--accent2);}
+  .date-pill.active{background:rgba(245,166,35,0.12);border-color:var(--accent2);color:var(--accent2);}
+  .date-pill .pill-cnt{font-size:0.62rem;background:var(--border);border-radius:10px;padding:1px 5px;margin-left:4px;}
+  .date-pill.active .pill-cnt{background:rgba(245,166,35,0.25);}
+
+  /* Daily date group header */
+  .daily-date-group{margin-bottom:20px;}
+  .daily-date-heading{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .daily-date-heading .dh-line{flex:1;height:1px;background:var(--border);}
+  .daily-date-heading .dh-badge{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:0.72rem;font-weight:600;color:var(--accent2);white-space:nowrap;}
+  .daily-date-heading .dh-badge.today{background:rgba(245,166,35,0.10);border-color:rgba(245,166,35,0.4);}
+  .daily-date-heading .dh-count{font-size:0.62rem;background:rgba(245,166,35,0.2);border-radius:10px;padding:2px 7px;color:var(--accent2);}
+
+  /* Daily Practice Question Card — IMPROVED */
+  .dq-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;margin-bottom:12px;}
+  .dq-card:hover{border-color:#2e3450;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+  .dq-card.dq-correct{border-color:rgba(34,197,94,0.4);box-shadow:0 0 0 1px rgba(34,197,94,0.1);}
+  .dq-card.dq-wrong{border-color:rgba(239,68,68,0.4);box-shadow:0 0 0 1px rgba(239,68,68,0.1);}
+
+  /* Card header strip */
+  .dq-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);}
+  .dq-num-badge{width:28px;height:28px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:var(--muted);flex-shrink:0;}
+  .dq-correct .dq-num-badge{background:rgba(34,197,94,0.2);color:var(--green);}
+  .dq-wrong .dq-num-badge{background:rgba(239,68,68,0.2);color:var(--red);}
+  .dq-status-chip{margin-left:auto;font-size:0.68rem;font-weight:600;padding:3px 10px;border-radius:20px;}
+  .dq-status-chip.s-pending{background:rgba(79,127,255,0.1);color:var(--accent);border:1px solid rgba(79,127,255,0.25);}
+  .dq-status-chip.s-correct{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+  .dq-status-chip.s-wrong{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+  .dq-added-by{font-size:0.65rem;color:var(--muted);margin-left:4px;}
+
+  /* Card body */
+  .dq-body{padding:14px 16px;}
+  .dq-question-label{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  .dq-question-text{font-size:0.9rem;line-height:1.6;color:var(--text);white-space:pre-wrap;font-family:monospace;background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;}
+
+  /* Attempts section */
+  .dq-attempts-label{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .dq-textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.85rem;font-family:monospace;outline:none;resize:vertical;min-height:72px;transition:border-color 0.2s;}
+  .dq-textarea:focus{border-color:var(--accent);}
+  .dq-textarea:disabled{opacity:0.6;cursor:not-allowed;}
+
+  /* Answer reveal */
+  .dq-answer-section{margin-top:12px;}
+  .dq-answer-label{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:6px;}
+  .dq-answer-box{background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:10px 14px;font-size:0.84rem;color:#a0d9a0;white-space:pre-wrap;line-height:1.6;}
+
+  /* Card footer actions */
+  .dq-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);background:rgba(0,0,0,0.1);flex-wrap:wrap;gap:8px;}
+  .dq-footer-left{display:flex;align-items:center;gap:6px;}
+  .dq-result-text{font-size:0.8rem;font-weight:600;}
+  .dq-result-text.correct{color:var(--green);}
+  .dq-result-text.wrong{color:var(--red);}
+  .dq-footer-right{display:flex;gap:6px;}
+  .btn-check{padding:6px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity 0.2s;}
+  .btn-check:hover{opacity:0.85;}
+  .btn-del-daily{padding:5px 10px;border-radius:8px;font-size:0.72rem;border:1px solid rgba(239,68,68,0.3);background:transparent;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+  .btn-del-daily:hover{background:rgba(239,68,68,0.1);}
+
+  /* Daily Stats improved */
+  .daily-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:16px;}
+  .daily-stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center;}
+  .daily-stat-num{font-size:1.4rem;font-weight:700;font-family:'Space Grotesk',sans-serif;line-height:1;}
+  .daily-stat-lbl{font-size:0.63rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;}
+
+  .no-daily-qs{text-align:center;padding:40px 20px;color:var(--muted);}
+  .no-daily-qs .nd-icon{font-size:2.5rem;margin-bottom:10px;}
+  .no-daily-qs .nd-msg{font-size:0.88rem;}
+  .no-daily-qs .nd-sub{font-size:0.75rem;color:var(--muted);margin-top:6px;opacity:0.7;}
 </style>
 </head>
 <body>
@@ -152,8 +272,41 @@
   <div class="stats-bar" id="statsBar"></div>
   <div id="uploadSection"></div>
   <div class="filter-bar" id="filterBar"></div>
+  <div class="subtopic-bar" id="subtopicBar"></div>
   <div id="questionArea"><div class="loading-msg">⏳ Loading questions...</div></div>
 </main>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal" style="display:none" onclick="closeEditModal(event)">
+  <div class="modal-box">
+    <h3>✏️ Edit Question</h3>
+    <input type="hidden" id="editId"/>
+    <div class="modal-field">
+      <label>Question</label>
+      <textarea class="modal-input" id="editQ" rows="3"></textarea>
+    </div>
+    <div class="modal-field">
+      <label>Options (one per line, e.g. A. option)</label>
+      <textarea class="modal-input" id="editOpts" rows="4" placeholder="A. Option 1&#10;B. Option 2&#10;C. Option 3&#10;D. Option 4"></textarea>
+    </div>
+    <div class="modal-field">
+      <label>Answer / Explanation</label>
+      <textarea class="modal-input" id="editAns" rows="3"></textarea>
+    </div>
+    <div class="modal-field">
+      <label>Subtopic</label>
+      <input class="modal-input" id="editSub" style="resize:none"/>
+    </div>
+    <div class="modal-field">
+      <label>Source</label>
+      <input class="modal-input" id="editSrc" style="resize:none"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── FIREBASE CONFIG ──────────────────────────
@@ -270,7 +423,7 @@ const BUILT_IN = [
   {id:"g6",tab:"gd",subtopic:"Education",q:"Should coding be mandatory in school curriculum?",answer:"FOR: Digital era demands it, improves logical thinking.\nAGAINST: Not all pursue tech, rural resource constraints.\nConclusion: Computational thinking = mandatory. Advanced coding = optional.",source:"Common Hexaware GD (Recalled)"},
 ];
 
-const TABS=[
+const BUILT_IN_TABS=[
   {id:"logical",label:"Logical Reasoning",icon:"🧠"},
   {id:"quants",label:"Quants",icon:"🔢"},
   {id:"verbal",label:"Verbal",icon:"📖"},
@@ -280,16 +433,24 @@ const TABS=[
   {id:"hr",label:"HR Interview",icon:"🗣️"},
   {id:"gd",label:"Group Discussion",icon:"👥"},
 ];
+let TABS = [...BUILT_IN_TABS]; // will merge custom tabs from Firestore
 
 // ── STATE ────────────────────────────────────
 let currentUser = null;
 let activeTab = "logical";
 let activeFilter = "all";
+let activeSubtopic = "all";
 let searchTerm = "";
-let userProgress = {};   // {qid: true}
-let extraQuestions = []; // custom questions from Firebase
+let userProgress = {};
+let extraQuestions = [];
+let customTabs = [];       // user-created tabs from Firestore
+let dailyQuestions = [];   // daily practice questions from Firestore
 let unsubProgress = null;
 let unsubExtra = null;
+let unsubTabs = null;
+let unsubDaily = null;
+let uploadOpen = true;
+let dailyMode = false;     // are we in Daily Practice mode?
 
 // ── LOGIN ────────────────────────────────────
 document.getElementById("nameInput").addEventListener("keydown", e => {
@@ -310,8 +471,12 @@ function doLogin() {
 function doLogout() {
   if(unsubProgress) unsubProgress();
   if(unsubExtra) unsubExtra();
-  currentUser = null; userProgress = {}; extraQuestions = [];
-  localStorage.removeItem("hexPrep_user"); // clear saved name on logout
+  if(unsubTabs) unsubTabs();
+  if(unsubDaily) unsubDaily();
+  currentUser = null; userProgress = {}; extraQuestions = []; customTabs = []; dailyQuestions = [];
+  dailyMode = false;
+  TABS = [...BUILT_IN_TABS];
+  localStorage.removeItem("hexPrep_user");
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("nameInput").value = "";
 }
@@ -338,7 +503,7 @@ function setSyncing(on) {
 }
 
 function subscribeToFirebase() {
-  // Progress (per user) — stored as Firestore doc: progress/{user}
+  // Progress (per user)
   unsubProgress = db.collection("progress").doc(currentUser)
     .onSnapshot(snap => {
       userProgress = snap.exists ? (snap.data() || {}) : {};
@@ -346,11 +511,26 @@ function subscribeToFirebase() {
       setSyncing(false);
     });
 
-  // Extra questions (shared by all) — stored as Firestore collection: questions/{id}
+  // Extra questions (shared)
   unsubExtra = db.collection("questions")
     .onSnapshot(snap => {
       extraQuestions = snap.docs.map(d => d.data());
       renderAll();
+    });
+
+  // Custom tabs (shared)
+  unsubTabs = db.collection("customTabs")
+    .onSnapshot(snap => {
+      customTabs = snap.docs.map(d => d.data());
+      TABS = [...BUILT_IN_TABS, ...customTabs.map(t=>({id:t.id,label:t.label,icon:t.icon||"📁"}))];
+      renderAll();
+    });
+
+  // Daily practice questions (shared)
+  unsubDaily = db.collection("daily")
+    .onSnapshot(snap => {
+      dailyQuestions = snap.docs.map(d => d.data());
+      if(dailyMode) renderDailyMode();
     });
 }
 
@@ -377,17 +557,18 @@ function deleteExtraQuestion(qid) {
 // ── RENDER ───────────────────────────────────
 function getAllQ() { return [...BUILT_IN, ...extraQuestions]; }
 
-function renderAll() {
-  renderTabs(); renderStats(); renderFilterBar(); renderUpload(); renderQuestions();
-}
-
 function renderTabs() {
   const all = getAllQ();
-  document.getElementById("tabsWrap").innerHTML = TABS.map(t => {
-    const cnt = all.filter(q => q.tab===t.id).length;
-    return `<button class="tab-btn ${t.id===activeTab?'active':''}" onclick="switchTab('${t.id}')">
-      ${t.icon} ${t.label} <span class="cnt">${cnt}</span></button>`;
-  }).join("");
+  document.getElementById("tabsWrap").innerHTML =
+    TABS.map(t => {
+      const cnt = all.filter(q => q.tab===t.id).length;
+      return `<button class="tab-btn ${!dailyMode && t.id===activeTab?'active':''}" onclick="switchTab('${t.id}')">
+        ${t.icon} ${t.label} <span class="cnt">${cnt}</span></button>`;
+    }).join("") +
+    `<button class="tab-btn ${dailyMode?'active':''}" onclick="enterDailyMode()" style="color:var(--accent2);${dailyMode?'border-bottom-color:var(--accent2)':''}">
+      ⚡ Daily Practice</button>` +
+    `<button class="tab-btn" onclick="promptNewTab()" style="color:var(--green);border-bottom:none">
+      ＋ New Tab</button>`;
 
   // Global progress bar
   const total = all.length;
@@ -398,9 +579,329 @@ function renderTabs() {
 }
 
 function switchTab(id) {
-  activeTab=id; activeFilter="all"; searchTerm="";
+  dailyMode=false; activeTab=id; activeFilter="all"; activeSubtopic="all"; searchTerm="";
   const si=document.querySelector(".search-input"); if(si) si.value="";
   renderAll();
+}
+
+function promptNewTab() {
+  const label = prompt("New tab name (e.g. Interview Tips):");
+  if(!label || !label.trim()) return;
+  const icon = prompt("Icon emoji (optional, press OK to skip):", "📁") || "📁";
+  const id = "ct_" + label.trim().toLowerCase().replace(/\s+/g,"_") + "_" + Date.now();
+  const newTab = {id, label: label.trim(), icon: icon.trim()||"📁"};
+  db.collection("customTabs").doc(id).set(newTab);
+  activeTab = id; dailyMode = false;
+}
+
+// ── DAILY PRACTICE MODE ──────────────────────
+function enterDailyMode() {
+  dailyMode = true;
+  renderAll();
+}
+
+function renderAll() {
+  renderTabs();
+  if(dailyMode) {
+    renderDailyMode();
+    return;
+  }
+  renderStats(); renderFilterBar(); renderSubtopicBar(); renderUpload(); renderQuestions();
+}
+
+// ── DAILY DATE STATE ─────────────────────────
+let selectedDailyDate = getTodayStr(); // "YYYY-MM-DD"
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function formatDateDisplay(dateStr) {
+  const today = getTodayStr();
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const d = new Date(dateStr + "T00:00:00");
+  const dayName = d.toLocaleDateString("en-IN",{weekday:"short"});
+  const display = d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+  if(dateStr===today) return `📅 Today · ${display}`;
+  if(dateStr===yesterday) return `Yesterday · ${display}`;
+  return `${dayName} · ${display}`;
+}
+
+function getDateKey(ts) {
+  // ts is epoch ms; return "YYYY-MM-DD" in local time
+  return new Date(ts).toISOString().slice(0,10);
+}
+
+function renderDailyMode() {
+  document.getElementById("filterBar").innerHTML = "";
+  document.getElementById("subtopicBar").innerHTML = "";
+
+  // --- Group questions by date ---
+  const groups = {}; // { "YYYY-MM-DD": [q, ...] }
+  dailyQuestions.forEach(q => {
+    const dk = q.date || getDateKey(q.ts || Date.now());
+    if(!groups[dk]) groups[dk] = [];
+    groups[dk].push(q);
+  });
+
+  // Get sorted unique dates (newest first)
+  const allDates = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  // If selectedDailyDate has no questions, default to most recent with questions (or today)
+  if(allDates.length && !groups[selectedDailyDate]) {
+    // don't override — user may be looking at a future date to add
+  }
+
+  // Compute stats for selected date
+  const selectedQs = groups[selectedDailyDate] || [];
+  const totalAll = dailyQuestions.length;
+  let correct=0, wrong=0, attempted=0;
+  selectedQs.forEach(q => {
+    if(q._answered) { attempted++; if(q._correct) correct++; else wrong++; }
+  });
+
+  // Stats bar
+  document.getElementById("statsBar").innerHTML = `
+    <div class="daily-stats-grid" style="width:100%">
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--accent2)">${selectedQs.length}</div>
+        <div class="daily-stat-lbl">Selected Day</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--green)">${correct}</div>
+        <div class="daily-stat-lbl">Correct</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--red)">${wrong}</div>
+        <div class="daily-stat-lbl">Wrong</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--muted)">${selectedQs.length-attempted}</div>
+        <div class="daily-stat-lbl">Pending</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--text)">${totalAll}</div>
+        <div class="daily-stat-lbl">All Time</div>
+      </div>
+    </div>`;
+
+  // Upload section
+  document.getElementById("uploadSection").innerHTML = `
+    <div class="upload-card">
+      <div class="upload-toggle" onclick="toggleDailyUpload()">
+        <h3>⚡ Add Question for <span style="color:var(--accent2)">${selectedDailyDate===getTodayStr()?'Today':''+selectedDailyDate}</span>
+          <span style="font-size:0.72rem;color:var(--muted);font-weight:400"> — rough practice</span></h3>
+        <span class="toggle-arr" id="dailyUploadArr">▼</span>
+      </div>
+      <div id="dailyUploadBody" style="display:none;margin-top:12px">
+        <div class="modal-field">
+          <label>Question / Code snippet *</label>
+          <textarea class="up-textarea" id="dq" rows="3" placeholder="Paste question or code here..."></textarea>
+        </div>
+        <div class="modal-field">
+          <label>Expected Answer (optional — used for validation)</label>
+          <textarea class="up-textarea" id="da" rows="2" placeholder="Expected output or answer..."></textarea>
+        </div>
+        <div class="upload-footer">
+          <span class="added-count" id="dailyAddedCount"></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-add-more" onclick="addDailyQ(true)">Save &amp; Add Another</button>
+            <button class="btn-add" onclick="addDailyQ(false)">Save →</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Date navigation bar
+  const today = getTodayStr();
+  // Build pill list: today + all dates that have questions (deduped, sorted desc)
+  const pillDates = [...new Set([today, ...allDates])].sort((a,b)=>b.localeCompare(a)).slice(0,10);
+
+  const dateBar = `
+    <div class="daily-date-bar">
+      <span class="daily-date-label">📆 Date</span>
+      <input type="date" class="daily-date-input" value="${selectedDailyDate}"
+        max="${today}" onchange="setDailyDate(this.value)"/>
+      <div class="daily-date-pills">
+        ${pillDates.map(d => {
+          const cnt = (groups[d]||[]).length;
+          const isToday = d===today;
+          const label = d===today ? 'Today' : d===new Date(Date.now()-86400000).toISOString().slice(0,10) ? 'Yesterday' :
+            new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+          return `<button class="date-pill ${d===selectedDailyDate?'active':''}" onclick="setDailyDate('${d}')">
+            ${isToday?'📅 ':''}${label}${cnt?`<span class="pill-cnt">${cnt}</span>`:''}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Question cards
+  const area = document.getElementById("questionArea");
+
+  if(!selectedQs.length) {
+    area.innerHTML = dateBar + `
+      <div class="no-daily-qs">
+        <div class="nd-icon">📭</div>
+        <div class="nd-msg">No questions for ${formatDateDisplay(selectedDailyDate)}</div>
+        <div class="nd-sub">Add a question above or pick a different date.</div>
+      </div>`;
+    return;
+  }
+
+  let cardNum = 1;
+  const cards = selectedQs.map(q => {
+    const answered = q._answered;
+    const isCorrect = q._correct;
+    const attempts = q._attempts || 0;
+    const attemptsLeft = MAX_DAILY_ATTEMPTS - attempts;
+    const wrongButRetrying = !answered && attempts > 0; // wrong, attempts remain
+    const outOfAttempts = q._outOfAttempts;
+
+    const statusChip = !answered
+      ? (wrongButRetrying
+          ? `<span class="dq-status-chip s-wrong">✗ Try again (${attemptsLeft} left)</span>`
+          : `<span class="dq-status-chip s-pending">Pending</span>`)
+      : isCorrect
+        ? `<span class="dq-status-chip s-correct">✓ Correct</span>`
+        : `<span class="dq-status-chip s-wrong">✗ Incorrect</span>`;
+
+    return `<div class="dq-card ${answered?(isCorrect?'dq-correct':'dq-wrong'):''}" id="dcard_${q.id}">
+      <div class="dq-header">
+        <div class="dq-num-badge">${cardNum++}</div>
+        <span style="font-size:0.72rem;color:var(--muted)">Daily Practice</span>
+        ${q.addedBy ? `<span class="dq-added-by">· 👤 ${esc(q.addedBy)}</span>` : ''}
+        ${statusChip}
+      </div>
+      <div class="dq-body">
+        <div class="dq-question-label">Question</div>
+        <div class="dq-question-text">${esc(q.q)}</div>
+        <div class="dq-attempts-label">Your Answer</div>
+        <textarea class="dq-textarea" id="dans_${q.id}" rows="2"
+          placeholder="Type your answer here..."
+          ${answered?'disabled':''}>${answered?(q._userAns||''):(q._userAns||'')}</textarea>
+        ${q.answer && answered ? `
+        <div class="dq-answer-section">
+          <div class="dq-answer-label">✓ Expected Answer</div>
+          <div class="dq-answer-box">${esc(q.answer)}</div>
+        </div>` : ''}
+      </div>
+      <div class="dq-footer">
+        <div class="dq-footer-left">
+          ${answered
+            ? (outOfAttempts
+                ? `<span class="dq-result-text wrong">❌ Out of attempts</span>`
+                : `<span class="dq-result-text ${isCorrect?'correct':'wrong'}">${isCorrect?'✅ Correct!':'❌ Incorrect'}</span>`)
+            : (wrongButRetrying
+                ? `<span class="dq-result-text wrong">❌ Incorrect — ${attemptsLeft} attempt${attemptsLeft!==1?'s':''} left</span>`
+                : `<span style="font-size:0.75rem;color:var(--muted)">Submit when ready</span>`)}
+        </div>
+        <div class="dq-footer-right">
+          ${!answered ? `<button class="btn-check" onclick="checkDailyQ('${q.id}')">✅ Check Answer</button>` : ''}
+          <button class="btn-del-daily" onclick="delDailyQ('${q.id}')">🗑 Remove</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const dateHeading = `
+    <div class="daily-date-group">
+      <div class="daily-date-heading">
+        <div class="dh-line"></div>
+        <div class="dh-badge ${selectedDailyDate===today?'today':''}">
+          ${formatDateDisplay(selectedDailyDate)}
+          <span class="dh-count">${selectedQs.length} Q${selectedQs.length!==1?'s':''}</span>
+        </div>
+        <div class="dh-line"></div>
+      </div>
+    </div>`;
+
+  area.innerHTML = dateBar + dateHeading + cards;
+}
+
+function setDailyDate(d) {
+  selectedDailyDate = d;
+  renderDailyMode();
+}
+
+let dailyUploadVisible = false;
+function toggleDailyUpload() {
+  dailyUploadVisible = !dailyUploadVisible;
+  const body = document.getElementById("dailyUploadBody");
+  const arr = document.getElementById("dailyUploadArr");
+  if(body) body.style.display = dailyUploadVisible ? "block" : "none";
+  if(arr) arr.classList.toggle("open", dailyUploadVisible);
+}
+
+let dailyAddedCount = 0;
+function addDailyQ(stayOpen) {
+  const q = document.getElementById("dq").value.trim();
+  const a = document.getElementById("da").value.trim();
+  if(!q) { alert("Please enter a question!"); return; }
+  const id = "dq_" + Date.now();
+  db.collection("daily").doc(id).set({
+    id, q, answer:a||"", addedBy:currentUser,
+    ts: Date.now(),
+    date: selectedDailyDate   // ← store date string for grouping
+  });
+  dailyAddedCount++;
+  document.getElementById("dq").value="";
+  document.getElementById("da").value="";
+  const c = document.getElementById("dailyAddedCount");
+  if(c) c.textContent = `✅ ${dailyAddedCount} added`;
+  if(!stayOpen) { dailyAddedCount=0; toggleDailyUpload(); }
+}
+
+const MAX_DAILY_ATTEMPTS = 3;
+
+function checkDailyQ(id) {
+  const q = dailyQuestions.find(x=>x.id===id);
+  if(!q) return;
+  const userAns = (document.getElementById("dans_"+id)||{}).value||"";
+  let isCorrect = false;
+  if(q.answer) {
+    isCorrect = userAns.trim().toLowerCase() === q.answer.trim().toLowerCase();
+  } else {
+    // No expected answer — just mark as attempted
+    isCorrect = true;
+  }
+
+  q._attempts = (q._attempts || 0) + 1;
+  q._userAns = userAns;
+
+  if(isCorrect) {
+    // Correct — lock immediately and reveal answer
+    q._answered = true; q._correct = true; q._outOfAttempts = false;
+  } else if(q._attempts >= MAX_DAILY_ATTEMPTS) {
+    // Out of attempts — lock and reveal answer, marked incorrect
+    q._answered = true; q._correct = false; q._outOfAttempts = true;
+  } else {
+    // Wrong, but attempts remain — stay unlocked, no answer shown
+    q._answered = false; q._correct = false; q._outOfAttempts = false;
+  }
+
+  // Store result locally (not in Firestore — daily is rough work)
+  renderDailyMode();
+}
+
+function delDailyQ(id) {
+  if(!confirm("Remove this daily question?")) return;
+  db.collection("daily").doc(id).delete();
+}
+
+function clearAllDaily() {
+  if(!confirm("Clear ALL daily practice questions across all dates? This cannot be undone.")) return;
+  const batch = db.batch();
+  dailyQuestions.forEach(q => batch.delete(db.collection("daily").doc(q.id)));
+  batch.commit();
+}
+
+function clearDateDaily() {
+  const dateQs = dailyQuestions.filter(q => (q.date || getDateKey(q.ts||Date.now())) === selectedDailyDate);
+  if(!dateQs.length) return;
+  if(!confirm(`Clear all ${dateQs.length} questions for ${formatDateDisplay(selectedDailyDate)}?`)) return;
+  const batch = db.batch();
+  dateQs.forEach(q => batch.delete(db.collection("daily").doc(q.id)));
+  batch.commit();
 }
 
 function renderStats() {
@@ -423,44 +924,117 @@ function renderFilterBar() {
     <button class="filter-btn f-pend ${activeFilter==='pending'?'active':''}" onclick="setFilter('pending')">⏳ Pending</button>`;
 }
 
+function renderSubtopicBar() {
+  const tabQs = getAllQ().filter(q=>q.tab===activeTab);
+  const subtopics = [...new Set(tabQs.map(q=>q.subtopic||"General"))];
+  if(subtopics.length <= 1) { document.getElementById("subtopicBar").innerHTML=""; return; }
+  const counts = {};
+  tabQs.forEach(q=>{ const k=q.subtopic||"General"; counts[k]=(counts[k]||0)+1; });
+  document.getElementById("subtopicBar").innerHTML =
+    `<button class="sub-btn ${activeSubtopic==='all'?'active':''}" onclick="setSubtopic('all')">All <span class="sub-cnt">${tabQs.length}</span></button>` +
+    subtopics.map(s=>`<button class="sub-btn ${activeSubtopic===s?'active':''}" onclick="setSubtopic('${s.replace(/'/g,"\\'")}')">
+      ${esc(s)} <span class="sub-cnt">${counts[s]||0}</span></button>`).join("");
+}
+
+function setSubtopic(s){ activeSubtopic=s; renderSubtopicBar(); renderQuestions(); }
 function setFilter(f){activeFilter=f;renderAll();}
 function onSearch(v){searchTerm=v.toLowerCase();renderAll();}
 
+function getSubtopicsForTab(tabId) {
+  return [...new Set(getAllQ().filter(q=>q.tab===tabId).map(q=>q.subtopic||"General"))];
+}
+
 function renderUpload() {
+  const subtopics = getSubtopicsForTab(activeTab);
   document.getElementById("uploadSection").innerHTML = `
     <div class="upload-card">
-      <h3>➕ Add Question <span style="font-size:0.72rem;color:var(--green);font-weight:400">(shared with everyone)</span></h3>
-      <div class="upload-row">
-        <input class="up-input" id="uq" placeholder="Question text..."/>
-        <input class="up-input" id="ua" placeholder="Answer / Explanation..."/>
+      <div class="upload-toggle" onclick="toggleUpload()">
+        <h3>➕ Add Question <span style="font-size:0.72rem;color:var(--green);font-weight:400">(shared with everyone)</span></h3>
+        <span class="toggle-arr ${uploadOpen?'open':''}">▼</span>
       </div>
-      <div class="upload-row">
-        <input class="up-input" id="usub" placeholder="Subtopic" style="max-width:160px"/>
-        <select class="up-select" id="utab">
-          ${TABS.map(t=>`<option value="${t.id}" ${t.id===activeTab?'selected':''}>${t.label}</option>`).join("")}
-        </select>
-        <input class="up-input" id="usrc" placeholder="Source (optional)" style="max-width:180px"/>
-        <button class="btn-add" onclick="addQ()">Add →</button>
-      </div>
+      ${uploadOpen ? `
+      <div class="upload-body">
+        <div class="upload-hint">Fill in the fields below. Options are optional (one per line).</div>
+        <div class="modal-field">
+          <label>Question *</label>
+          <textarea class="up-textarea" id="uq" placeholder="Type your question here..." rows="2"></textarea>
+        </div>
+        <div class="upload-grid">
+          <div class="modal-field" style="margin:0">
+            <label>Options (one per line)</label>
+            <textarea class="up-textarea" id="uopts" placeholder="A. Option 1&#10;B. Option 2&#10;C. Option 3&#10;D. Option 4" rows="4"></textarea>
+          </div>
+          <div class="modal-field" style="margin:0">
+            <label>Answer / Explanation *</label>
+            <textarea class="up-textarea" id="ua" placeholder="Correct answer and explanation..." rows="4"></textarea>
+          </div>
+        </div>
+        <div class="upload-grid" style="margin-top:8px">
+          <div class="modal-field" style="margin:0">
+            <label>Subtopic (select existing or type new)</label>
+            <input class="up-input" id="usub" placeholder="e.g. Number Series" list="subtopic-list" autocomplete="off"/>
+            <datalist id="subtopic-list">
+              ${subtopics.map(s=>`<option value="${esc(s)}"></option>`).join("")}
+            </datalist>
+          </div>
+          <div class="modal-field" style="margin:0">
+            <label>Tab</label>
+            <select class="up-select" id="utab">
+              ${TABS.map(t=>`<option value="${t.id}" ${t.id===activeTab?'selected':''}>${t.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="modal-field" style="margin-top:8px">
+          <label>Source (optional)</label>
+          <input class="up-input" id="usrc" placeholder="e.g. PrepInsta, GFG, etc."/>
+        </div>
+        <div class="upload-footer" style="margin-top:10px">
+          <span class="added-count" id="addedCount"></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-add-more" onclick="addQ(true)">Save &amp; Add Another</button>
+            <button class="btn-add" onclick="addQ(false)">Save →</button>
+          </div>
+        </div>
+      </div>` : ''}
     </div>`;
 }
 
-function addQ() {
+let addedCount = 0;
+function toggleUpload(){ uploadOpen=!uploadOpen; renderUpload(); }
+
+function addQ(stayOpen) {
   const q=document.getElementById("uq").value.trim();
   const a=document.getElementById("ua").value.trim();
+  const optsRaw=document.getElementById("uopts").value.trim();
   const sub=document.getElementById("usub").value.trim()||"Custom";
   const tab=document.getElementById("utab").value;
   const src=document.getElementById("usrc").value.trim()||"Added by "+currentUser;
   if(!q){alert("Please enter a question!"); return;}
+  const options = optsRaw ? optsRaw.split("\n").map(s=>s.trim()).filter(Boolean) : null;
   const id="cq_"+Date.now();
   const newQ={id,tab,subtopic:sub,q,answer:a,source:src,addedBy:currentUser};
+  if(options && options.length) newQ.options=options;
   saveExtraQuestion(newQ);
-  activeTab=tab;
+  addedCount++;
+  if(stayOpen) {
+    // clear fields but keep subtopic/tab/source
+    document.getElementById("uq").value="";
+    document.getElementById("ua").value="";
+    document.getElementById("uopts").value="";
+    const c=document.getElementById("addedCount");
+    if(c) c.textContent=`✅ ${addedCount} question(s) added`;
+  } else {
+    addedCount=0;
+    activeTab=tab;
+    uploadOpen=false;
+    renderAll();
+  }
 }
 
 function renderQuestions() {
   const area=document.getElementById("questionArea");
   let qs=getAllQ().filter(q=>q.tab===activeTab);
+  if(activeSubtopic!=="all") qs=qs.filter(q=>(q.subtopic||"General")===activeSubtopic);
   if(activeFilter==="done") qs=qs.filter(q=>userProgress[q.id]);
   if(activeFilter==="pending") qs=qs.filter(q=>!userProgress[q.id]);
   if(searchTerm) qs=qs.filter(q=>
@@ -491,13 +1065,55 @@ function renderQuestions() {
           <div class="q-actions">
             <button class="btn-sm btn-ans" onclick="toggleAns('${q.id}')">💡 Answer</button>
             <button class="btn-sm btn-done-q" onclick="toggleDone('${q.id}')">${done?'✅ Done':'Mark Done'}</button>
-            ${q.id.startsWith('cq_')?`<button class="btn-sm btn-del" onclick="delQ('${q.id}')">🗑</button>`:""}
+            <button class="btn-sm" style="border-color:#7a80a0;color:#7a80a0" onclick="openEdit('${q.id}')">✏️ Edit</button>
+            <button class="btn-sm btn-del" onclick="delQ('${q.id}')">🗑 Delete</button>
           </div>
         </div>
       </div>`;
     }).join("");
-    return `<div class="sec-label">${sub}</div><div class="q-list">${cards}</div>`;
+    return activeSubtopic==="all"
+      ? `<div class="sec-label">${sub}</div><div class="q-list">${cards}</div>`
+      : `<div class="q-list">${cards}</div>`;
   }).join("");
+}
+
+// ── EDIT MODAL ───────────────────────────────
+function openEdit(id) {
+  const all = getAllQ();
+  const q = all.find(x=>x.id===id);
+  if(!q) return;
+  document.getElementById("editId").value = id;
+  document.getElementById("editQ").value = q.q||"";
+  document.getElementById("editOpts").value = q.options ? q.options.join("\n") : "";
+  document.getElementById("editAns").value = q.answer||"";
+  document.getElementById("editSub").value = q.subtopic||"";
+  document.getElementById("editSrc").value = q.source||"";
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal(e) {
+  if(!e || e.target===document.getElementById("editModal"))
+    document.getElementById("editModal").style.display = "none";
+}
+
+function saveEdit() {
+  const id = document.getElementById("editId").value;
+  const all = getAllQ();
+  const orig = all.find(x=>x.id===id);
+  if(!orig) return;
+  const optsRaw = document.getElementById("editOpts").value.trim();
+  const options = optsRaw ? optsRaw.split("\n").map(s=>s.trim()).filter(Boolean) : null;
+  const updated = {
+    ...orig,
+    q: document.getElementById("editQ").value.trim(),
+    answer: document.getElementById("editAns").value.trim(),
+    subtopic: document.getElementById("editSub").value.trim()||orig.subtopic,
+    source: document.getElementById("editSrc").value.trim()||orig.source,
+  };
+  if(options && options.length) updated.options=options; else delete updated.options;
+  // For built-in questions, save as custom override with same id
+  saveExtraQuestion(updated);
+  document.getElementById("editModal").style.display = "none";
 }
 
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
@@ -524,4 +1140,3 @@ function delQ(id){
 </script>
 </body>
 </html>
-
