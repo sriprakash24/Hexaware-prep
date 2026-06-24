@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hexaware Prep Hub</title>
+<!-- Firebase — loaded in <head> so global is ready before body scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+  :root{--bg:#0d0f1a;--surface:#141626;--card:#1a1e30;--border:#252a40;--accent:#4f7fff;--accent2:#f5a623;--green:#22c55e;--red:#ef4444;--text:#e8eaf0;--muted:#7a80a0;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* LOGIN */
+  #loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;}
+  .login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:320px;text-align:center;}
+  .login-box h2{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;margin-bottom:6px;}
+  .login-box p{color:var(--muted);font-size:0.82rem;margin-bottom:24px;}
+  .login-input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.9rem;font-family:'Inter',sans-serif;outline:none;margin-bottom:12px;}
+  .login-input:focus{border-color:var(--accent);}
+  .login-btn{width:100%;padding:11px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:0.95rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;}
+  .login-btn:hover{opacity:0.88;}
+  .login-err{color:var(--red);font-size:0.78rem;margin-top:8px;}
+
+  /* HEADER */
+  header{background:linear-gradient(135deg,#0d0f1a,#1a1e30);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:100;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .logo{font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;}
+  .logo span{color:var(--accent);}
+  .header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .user-badge{background:var(--border);border-radius:20px;padding:4px 12px;font-size:0.78rem;color:var(--accent);}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px;}
+  .sync-dot.syncing{background:var(--accent2);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .progress-wrap{background:var(--border);border-radius:20px;height:7px;width:140px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width 0.4s;}
+  .progress-lbl{font-size:0.68rem;color:var(--muted);margin-top:3px;text-align:right;}
+  .btn-logout{padding:4px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.75rem;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+
+  /* TABS */
+  .tabs-wrap{overflow-x:auto;white-space:nowrap;padding:10px 20px 0;border-bottom:1px solid var(--border);background:var(--surface);}
+  .tabs-wrap::-webkit-scrollbar{height:3px;}
+  .tabs-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .tab-btn{display:inline-block;padding:8px 16px;font-size:0.8rem;font-weight:500;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap;font-family:'Inter',sans-serif;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-btn .cnt{background:var(--border);border-radius:20px;padding:1px 6px;font-size:0.66rem;margin-left:4px;color:var(--muted);}
+  .tab-btn.active .cnt{background:var(--accent);color:#fff;}
+
+  /* MAIN */
+  main{padding:14px 20px;max-width:960px;margin:0 auto;}
+
+  /* STATS */
+  .stats-bar{display:flex;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:14px;}
+  .stat-item{text-align:center;}
+  .stat-num{font-size:1.2rem;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+  .stat-lbl{font-size:0.65rem;color:var(--muted);margin-top:1px;}
+
+  /* FILTER */
+  .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+  .search-input{flex:1;min-width:160px;max-width:280px;padding:7px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.8rem;font-family:'Inter',sans-serif;outline:none;}
+  .search-input:focus{border-color:var(--accent);}
+  .filter-btn{padding:5px 12px;border-radius:20px;font-size:0.76rem;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+  .filter-btn.active{border-color:var(--accent);color:var(--accent);}
+  .filter-btn.f-done.active{border-color:var(--green);color:var(--green);}
+  .filter-btn.f-pend.active{border-color:var(--accent2);color:var(--accent2);}
+
+  /* UPLOAD */
+  .upload-card{background:var(--card);border:2px dashed var(--border);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .upload-card h3{font-size:0.9rem;margin-bottom:10px;}
+  .upload-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .up-input{flex:1;min-width:160px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;}
+  .up-input:focus{border-color:var(--accent);}
+  .up-select{padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+  .btn-add{padding:7px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;}
+  .btn-add:hover{opacity:0.85;}
+
+  /* QUESTION CARD */
+  .sec-label{font-size:0.7rem;font-weight:600;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;margin:16px 0 7px;}
+  .q-list{display:flex;flex-direction:column;gap:9px;}
+  .q-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 14px;display:flex;gap:10px;align-items:flex-start;transition:border-color 0.2s;}
+  .q-card:hover{border-color:#2e3450;}
+  .q-card.done{border-left:3px solid var(--green);opacity:0.78;}
+  .q-card.done:hover{opacity:1;}
+  .q-num{min-width:26px;height:26px;border-radius:7px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600;color:var(--muted);flex-shrink:0;margin-top:1px;}
+  .q-card.done .q-num{background:var(--green);color:#fff;}
+  .q-body{flex:1;}
+  .q-text{font-size:0.88rem;line-height:1.55;white-space:pre-wrap;}
+  .q-opts{margin-top:7px;display:flex;flex-direction:column;gap:2px;}
+  .q-opt{font-size:0.8rem;color:var(--muted);}
+  .q-answer{margin-top:8px;font-size:0.8rem;background:#1a2a1a;border-left:3px solid var(--green);padding:7px 10px;border-radius:0 8px 8px 0;color:#a0d9a0;display:none;white-space:pre-wrap;}
+  .q-card.show-ans .q-answer{display:block;}
+  .q-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;align-items:center;}
+  .q-tag{font-size:0.66rem;padding:2px 7px;border-radius:10px;background:var(--border);color:var(--muted);}
+  .q-src{font-size:0.66rem;color:var(--muted);font-style:italic;}
+  .q-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+  .btn-sm{padding:4px 10px;border-radius:7px;font-size:0.72rem;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+  .btn-sm:hover{background:var(--border);color:var(--text);}
+  .btn-ans{border-color:var(--accent);color:var(--accent);}
+  .btn-ans:hover{background:#1a2040;}
+  .btn-done-q{border-color:var(--green);color:var(--green);}
+  .btn-done-q:hover{background:#1a2e1a;}
+  .q-card.done .btn-done-q{background:var(--green);color:#0d1a0d;}
+  .btn-del{border-color:var(--red)!important;color:var(--red)!important;}
+
+  /* ── ADMIN USER BAR ── */
+  #adminUserBar{background:linear-gradient(90deg,#0d1230,#1a1e30);border-bottom:2px solid var(--accent);padding:6px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;overflow-x:auto;}
+  #adminUserBar::-webkit-scrollbar{height:3px;}
+  #adminUserBar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .admin-bar-label{font-size:0.66rem;font-weight:700;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase;white-space:nowrap;}
+  .admin-user-chip{padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .admin-user-chip:hover{border-color:var(--accent);color:var(--accent);}
+  .admin-user-chip.viewing{background:rgba(79,127,255,0.15);border-color:var(--accent);color:var(--accent);}
+  .admin-user-chip.self-chip{border-color:var(--accent2);color:var(--accent2);}
+  .admin-user-chip.self-chip.viewing{background:rgba(245,166,35,0.15);}
+
+  /* ── ADMIN PANEL ── */
+  .admin-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;}
+  .admin-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .admin-panel-title{font-family:'Space Grotesk',sans-serif;font-size:1rem;color:var(--accent);display:flex;align-items:center;gap:8px;}
+  .admin-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+  .admin-table th{text-align:left;font-size:0.66rem;font-weight:700;letter-spacing:0.08em;color:var(--muted);text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--border);}
+  .admin-table td{padding:8px 10px;border-bottom:1px solid rgba(37,42,64,0.5);vertical-align:middle;}
+  .admin-table tr:last-child td{border-bottom:none;}
+  .admin-table tr:hover td{background:rgba(255,255,255,0.02);}
+  .user-chip-inline{background:var(--border);border-radius:20px;padding:3px 10px;font-size:0.73rem;color:var(--text);display:inline-block;}
+  .progress-mini{background:var(--border);border-radius:10px;height:6px;width:80px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px;}
+  .progress-mini-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--green));}
+  .admin-view-btn{padding:3px 10px;border-radius:6px;font-size:0.7rem;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;font-family:'Inter',sans-serif;margin-right:4px;}
+  .admin-view-btn:hover{background:rgba(79,127,255,0.15);}
+  .admin-del-btn{padding:3px 10px;border-radius:6px;font-size:0.7rem;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;}
+  .admin-del-btn:hover{background:rgba(239,68,68,0.1);}
+  .view-mode-banner{background:rgba(79,127,255,0.1);border:1px solid rgba(79,127,255,0.3);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;gap:10px;}
+  .view-mode-banner strong{color:var(--accent);}
+  .btn-exit-view{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:0.75rem;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn-exit-view:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  .no-qs{color:var(--muted);text-align:center;padding:30px;font-size:0.86rem;}
+  .loading-msg{color:var(--muted);text-align:center;padding:40px;font-size:0.9rem;}
+
+  /* SUBTOPIC TABS */
+  .subtopic-bar{overflow-x:auto;white-space:nowrap;padding:4px 0 10px;margin-bottom:4px;}
+  .subtopic-bar::-webkit-scrollbar{height:3px;}
+  .subtopic-bar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .sub-btn{display:inline-block;padding:4px 12px;font-size:0.74rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);border-radius:20px;margin-right:6px;font-family:'Inter',sans-serif;transition:all 0.2s;white-space:nowrap;}
+  .sub-btn:hover{color:var(--text);border-color:#3a4060;}
+  .sub-btn.active{border-color:var(--accent2);color:var(--accent2);background:#1e1a0d;}
+  .sub-btn .sub-cnt{font-size:0.62rem;margin-left:3px;opacity:0.7;}
+
+  /* EDIT MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;}
+  .modal-box h3{font-size:0.95rem;margin-bottom:14px;font-family:'Space Grotesk',sans-serif;}
+  .modal-field{margin-bottom:10px;}
+  .modal-field label{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:4px;}
+  .modal-input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.83rem;font-family:'Inter',sans-serif;outline:none;resize:vertical;}
+  .modal-input:focus{border-color:var(--accent);}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;}
+  .btn-cancel{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;}
+  .btn-save{padding:7px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;}
+
+  /* IMPROVED UPLOAD */
+  .upload-card{background:var(--card);border:2px dashed var(--border);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .upload-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .upload-toggle h3{font-size:0.9rem;margin:0;}
+  .upload-toggle .toggle-arr{color:var(--muted);font-size:0.8rem;transition:transform 0.2s;}
+  .upload-toggle .toggle-arr.open{transform:rotate(180deg);}
+  .upload-body{margin-top:12px;}
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  @media(max-width:500px){.upload-grid{grid-template-columns:1fr;}}
+  .up-input{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;}
+  .up-input:focus{border-color:var(--accent);}
+  .up-textarea{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;resize:vertical;min-height:60px;box-sizing:border-box;}
+  .up-textarea:focus{border-color:var(--accent);}
+  .up-select{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+  .upload-hint{font-size:0.7rem;color:var(--muted);margin-bottom:8px;}
+  .upload-footer{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+  .btn-add{padding:7px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;}
+  .btn-add:hover{opacity:0.85;}
+  .btn-add-more{padding:7px 14px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:0.82rem;font-family:'Inter',sans-serif;cursor:pointer;}
+  .added-count{font-size:0.72rem;color:var(--green);}
+
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+  /* ── DAILY PRACTICE IMPROVEMENTS ── */
+
+  /* Date Selector Bar */
+  .daily-date-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .daily-date-label{font-size:0.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+  .daily-date-input{padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.82rem;font-family:'Inter',sans-serif;outline:none;cursor:pointer;}
+  .daily-date-input:focus{border-color:var(--accent2);}
+  .daily-date-pills{display:flex;gap:6px;flex-wrap:wrap;}
+  .date-pill{padding:5px 12px;border-radius:20px;font-size:0.73rem;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+  .date-pill:hover{border-color:var(--accent2);color:var(--accent2);}
+  .date-pill.active{background:rgba(245,166,35,0.12);border-color:var(--accent2);color:var(--accent2);}
+  .date-pill .pill-cnt{font-size:0.62rem;background:var(--border);border-radius:10px;padding:1px 5px;margin-left:4px;}
+  .date-pill.active .pill-cnt{background:rgba(245,166,35,0.25);}
+
+  /* Daily date group header */
+  .daily-date-group{margin-bottom:20px;}
+  .daily-date-heading{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .daily-date-heading .dh-line{flex:1;height:1px;background:var(--border);}
+  .daily-date-heading .dh-badge{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:0.72rem;font-weight:600;color:var(--accent2);white-space:nowrap;}
+  .daily-date-heading .dh-badge.today{background:rgba(245,166,35,0.10);border-color:rgba(245,166,35,0.4);}
+  .daily-date-heading .dh-count{font-size:0.62rem;background:rgba(245,166,35,0.2);border-radius:10px;padding:2px 7px;color:var(--accent2);}
+
+  /* Daily Practice Question Card — IMPROVED */
+  .dq-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s;margin-bottom:12px;}
+  .dq-card:hover{border-color:#2e3450;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+  .dq-card.dq-correct{border-color:rgba(34,197,94,0.4);box-shadow:0 0 0 1px rgba(34,197,94,0.1);}
+  .dq-card.dq-wrong{border-color:rgba(239,68,68,0.4);box-shadow:0 0 0 1px rgba(239,68,68,0.1);}
+
+  /* Card header strip */
+  .dq-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);}
+  .dq-num-badge{width:28px;height:28px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:var(--muted);flex-shrink:0;}
+  .dq-correct .dq-num-badge{background:rgba(34,197,94,0.2);color:var(--green);}
+  .dq-wrong .dq-num-badge{background:rgba(239,68,68,0.2);color:var(--red);}
+  .dq-status-chip{margin-left:auto;font-size:0.68rem;font-weight:600;padding:3px 10px;border-radius:20px;}
+  .dq-status-chip.s-pending{background:rgba(79,127,255,0.1);color:var(--accent);border:1px solid rgba(79,127,255,0.25);}
+  .dq-status-chip.s-correct{background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.3);}
+  .dq-status-chip.s-wrong{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+  .dq-added-by{font-size:0.65rem;color:var(--muted);margin-left:4px;}
+
+  /* Card body */
+  .dq-body{padding:14px 16px;}
+  .dq-question-label{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  .dq-question-text{font-size:0.9rem;line-height:1.6;color:var(--text);white-space:pre-wrap;font-family:monospace;background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;}
+
+  /* Attempts section */
+  .dq-attempts-label{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .dq-textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.85rem;font-family:monospace;outline:none;resize:vertical;min-height:72px;transition:border-color 0.2s;}
+  .dq-textarea:focus{border-color:var(--accent);}
+  .dq-textarea:disabled{opacity:0.6;cursor:not-allowed;}
+
+  /* Answer reveal */
+  .dq-answer-section{margin-top:12px;}
+  .dq-answer-label{font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:6px;}
+  .dq-answer-box{background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:10px 14px;font-size:0.84rem;color:#a0d9a0;white-space:pre-wrap;line-height:1.6;}
+
+  /* Card footer actions */
+  .dq-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border);background:rgba(0,0,0,0.1);flex-wrap:wrap;gap:8px;}
+  .dq-footer-left{display:flex;align-items:center;gap:6px;}
+  .dq-result-text{font-size:0.8rem;font-weight:600;}
+  .dq-result-text.correct{color:var(--green);}
+  .dq-result-text.wrong{color:var(--red);}
+  .dq-footer-right{display:flex;gap:6px;}
+  .btn-check{padding:6px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity 0.2s;}
+  .btn-check:hover{opacity:0.85;}
+  .btn-del-daily{padding:5px 10px;border-radius:8px;font-size:0.72rem;border:1px solid rgba(239,68,68,0.3);background:transparent;color:var(--red);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+  .btn-del-daily:hover{background:rgba(239,68,68,0.1);}
+
+  /* Daily Stats improved */
+  .daily-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:16px;}
+  .daily-stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center;}
+  .daily-stat-num{font-size:1.4rem;font-weight:700;font-family:'Space Grotesk',sans-serif;line-height:1;}
+  .daily-stat-lbl{font-size:0.63rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;}
+
+  .no-daily-qs{text-align:center;padding:40px 20px;color:var(--muted);}
+  .no-daily-qs .nd-icon{font-size:2.5rem;margin-bottom:10px;}
+  .no-daily-qs .nd-msg{font-size:0.88rem;}
+  .no-daily-qs .nd-sub{font-size:0.75rem;color:var(--muted);margin-top:6px;opacity:0.7;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:2rem;margin-bottom:10px;">🔥</div>
+    <h2>Hexaware <span style="color:var(--accent)">Prep Hub</span></h2>
+    <p>Enter your name to track your progress across all devices</p>
+    <input class="login-input" id="nameInput" placeholder="Your name (e.g. Srii)" maxlength="30"/>
+    <button class="login-btn" onclick="doLogin()">Start Preparing →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<header>
+  <div class="header-top">
+    <div class="logo">Hexaware <span>Prep Hub</span></div>
+    <div class="header-right">
+      <div>
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncLbl" style="font-size:0.72rem;color:var(--muted)">Live</span>
+      </div>
+      <div class="user-badge" id="userBadge"></div>
+      <div>
+        <div class="progress-wrap"><div class="progress-fill" id="globalBar" style="width:0%"></div></div>
+        <div class="progress-lbl" id="globalLbl">0 / 0 done</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- ADMIN USER BAR (only shown when logged in as admin) -->
+<div id="adminUserBar" style="display:none">
+  <span class="admin-bar-label">👑 Viewing:</span>
+  <div id="adminUserChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+</div>
+
+<div class="tabs-wrap" id="tabsWrap"></div>
+
+<main>
+  <div id="adminPanel" style="display:none"></div>
+  <div id="viewModeBanner" style="display:none"></div>
+  <div class="stats-bar" id="statsBar"></div>
+  <div id="uploadSection"></div>
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="subtopic-bar" id="subtopicBar"></div>
+  <div id="questionArea"><div class="loading-msg">⏳ Loading questions...</div></div>
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal" style="display:none" onclick="closeEditModal(event)">
+  <div class="modal-box">
+    <h3>✏️ Edit Question</h3>
+    <input type="hidden" id="editId"/>
+    <div class="modal-field">
+      <label>Question</label>
+      <textarea class="modal-input" id="editQ" rows="3"></textarea>
+    </div>
+    <div class="modal-field">
+      <label>Options (one per line, e.g. A. option)</label>
+      <textarea class="modal-input" id="editOpts" rows="4" placeholder="A. Option 1&#10;B. Option 2&#10;C. Option 3&#10;D. Option 4"></textarea>
+    </div>
+    <div class="modal-field">
+      <label>Answer / Explanation</label>
+      <textarea class="modal-input" id="editAns" rows="3"></textarea>
+    </div>
+    <div class="modal-field">
+      <label>Subtopic</label>
+      <input class="modal-input" id="editSub" style="resize:none"/>
+    </div>
+    <div class="modal-field">
+      <label>Source</label>
+      <input class="modal-input" id="editSrc" style="resize:none"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── FIREBASE CONFIG ──────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyB_eHp4XyRZ9IdKxnqPXOF2sf9iZja35xQ",
+  authDomain: "hexaware-prep.firebaseapp.com",
+  databaseURL: "https://hexaware-prep-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "hexaware-prep",
+  storageBucket: "hexaware-prep.firebasestorage.app",
+  messagingSenderId: "864371088983",
+  appId: "1:864371088983:web:e997b67f042b108b8d4d12"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ── BUILT-IN QUESTIONS ───────────────────────
+const BUILT_IN = [
+  {id:"l1",tab:"logical",subtopic:"Number Series",q:"Choose the number which is different from the remaining: 25, 81, 169, 343",options:["A. 25","B. 81","C. 169","D. 343"],answer:"D. 343 — All others (25,81,169) are perfect squares. 343=7³ is a perfect cube.",source:"FreshersNow/Letsfindcourse (Recalled)"},
+  {id:"l2",tab:"logical",subtopic:"Alphabet Series",q:"If alternate letters starting from 'A' are changed to small letters, which represents the second month after June?\nA B C D E F G H I J K L M N O P Q R S T U V W X Y Z",options:["A. augusT","B. AUgUsT","C. AugusT","D. August"],answer:"C. AugusT — Pattern: a B c D e F g H i J k L m N o P q R s T u V w X y Z → August = AugusT",source:"Letsfindcourse (Recalled)"},
+  {id:"l3",tab:"logical",subtopic:"Letter Series",q:"Find the missing letters: C D E, ?, L K J",options:["A. CDE","B. LKI","C. LKJ","D. BAC"],answer:"C. LKJ — Letters in reverse alphabetical order.",source:"Letsfindcourse (Recalled)"},
+  {id:"l4",tab:"logical",subtopic:"Blood Relations",q:"A man says: 'His father is the only son of my father.' What is the boy to the man?",options:["A. Brother","B. Son","C. Uncle","D. Nephew"],answer:"B. Son — 'Only son of my father' = the man himself. So the boy's father IS the man.",source:"Letsfindcourse (Recalled)"},
+  {id:"l5",tab:"logical",subtopic:"Number Series",q:"What comes next: 2, 6, 12, 20, 30, ?",options:["A. 40","B. 42","C. 44","D. 36"],answer:"B. 42 — Differences: 4,6,8,10,12. Next = 30+12 = 42.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"l6",tab:"logical",subtopic:"Statement & Conclusion",q:"Statements: All birds can fly. Pigeons are birds.\nConclusion I: Pigeons can fly.\nConclusion II: Some birds cannot fly.",options:["A. Only I","B. Only II","C. Both","D. Neither"],answer:"A. Only I — Conclusion II contradicts the first statement.",source:"TalentBattle Pattern (Recalled)"},
+  {id:"l7",tab:"logical",subtopic:"Syllogism",q:"Some managers are leaders. All leaders are visionaries.\nConclusion I: Some managers are visionaries.\nConclusion II: All visionaries are managers.",options:["A. Only I follows","B. Only II follows","C. Both","D. Neither"],answer:"A. Only I follows — Conclusion II is not necessarily true.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"l8",tab:"logical",subtopic:"Statement & Assumption",q:"Statement: 'Use XYZ toothpaste for strong teeth.'\nIs assumption 'People desire strong teeth' implicit?",options:["A. Yes, implicit","B. No, not implicit"],answer:"A. Yes, implicit — The ad is only meaningful if people desire strong teeth.",source:"TalentBattle Pattern (Recalled)"},
+  {id:"l9",tab:"logical",subtopic:"Course of Action",q:"Problem: Road accidents are increasing.\nAction I: Impose strict speed limits.\nAction II: Ban all vehicles permanently.",options:["A. Only I follows","B. Only II follows","C. Both","D. Neither"],answer:"A. Only I follows — Speed limits are practical. Banning all vehicles is extreme.",source:"TalentBattle Pattern (Recalled)"},
+  {id:"l10",tab:"logical",subtopic:"Arrangement",q:"Five friends A,B,C,D,E sit in a row. A is right of B. C is left of D. E is between A and C. Who is in the middle?",options:["A. A","B. B","C. E","D. C"],answer:"C. E — Order: B–A–E–C–D. E is position 3 (middle).",source:"PrepInsta Pattern (Recalled)"},
+  {id:"l11",tab:"logical",subtopic:"Ranking",q:"In a row of 40 students, Priya is 10th from the left. What is her position from the right?",options:["A. 30","B. 31","C. 29","D. 32"],answer:"B. 31 — (Total+1) – Position from left = 41–10 = 31.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"l12",tab:"logical",subtopic:"Data Interpretation",q:"Total budget = ₹5,00,000. Marketing = 20%. What is the marketing budget?",options:["A. ₹50,000","B. ₹1,00,000","C. ₹1,50,000","D. ₹2,00,000"],answer:"B. ₹1,00,000 — 20% of 5,00,000 = 1,00,000.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"l13",tab:"logical",subtopic:"Data Interpretation",q:"Product A: Q1=200,Q4=350. Product B: Q1=150,Q4=250. Which had maximum growth Q1→Q4?",options:["A. Product A","B. Product B","C. Equal","D. Cannot determine"],answer:"A. Product A — A grew 75% (200→350). B grew 67% (150→250).",source:"PrepInsta Pattern (Recalled)"},
+
+  {id:"q1",tab:"quants",subtopic:"Time & Work",q:"A can do work in 10 days, B in 15 days. Days to finish together?",options:["A. 5","B. 6","C. 8","D. 12"],answer:"B. 6 days — Together = 1/10+1/15 = 5/30 = 1/6. So 6 days.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q2",tab:"quants",subtopic:"Speed, Distance, Time",q:"A train 150m long passes a pole in 9 seconds. Speed in km/h?",options:["A. 50","B. 54","C. 60","D. 66"],answer:"C. 60 km/h — 150/9 m/s = 16.67 m/s × 18/5 = 60 km/h.",source:"Cuvette Tech (Recalled)"},
+  {id:"q3",tab:"quants",subtopic:"Percentage",q:"Product costs ₹800, sold at 15% profit. Selling price?",options:["A. ₹880","B. ₹900","C. ₹920","D. ₹960"],answer:"C. ₹920 — Profit = 120. SP = 800+120 = 920.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q4",tab:"quants",subtopic:"Profit & Loss",q:"Buy 20 articles for ₹1500, sell 16 for ₹1500. Profit/loss %?",options:["A. 20% loss","B. 25% profit","C. 25% loss","D. 20% profit"],answer:"B. 25% profit — CP/article=75, SP/article=93.75. Profit%=25%.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q5",tab:"quants",subtopic:"Probability",q:"Two dice thrown. Probability of sum = 7?",options:["A. 1/6","B. 5/36","C. 7/36","D. 1/9"],answer:"A. 1/6 — 6 favourable outcomes out of 36 total.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q6",tab:"quants",subtopic:"Permutation & Combination",q:"Arrange 'HEXAWARE' letters with all vowels together. How many ways?",options:["A. 720","B. 2880","C. 4320","D. 1440"],answer:"C. 4320 — Treat 4 vowels as 1 block. 5 items × vowel arrangements.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q7",tab:"quants",subtopic:"Ratio & Proportion",q:"A:B salary = 3:5. B earns ₹25,000. A earns?",options:["A. ₹12,000","B. ₹15,000","C. ₹18,000","D. ₹20,000"],answer:"B. ₹15,000 — (3/5)×25000 = 15,000.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q8",tab:"quants",subtopic:"Simple Interest",q:"SI on ₹5000 at 8% per annum for 3 years?",options:["A. ₹1000","B. ₹1200","C. ₹1500","D. ₹2000"],answer:"B. ₹1200 — SI = (5000×8×3)/100 = 1200.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q9",tab:"quants",subtopic:"Average",q:"Average of 5 numbers = 27. Remove one, average = 25. Excluded number?",options:["A. 35","B. 30","C. 32","D. 37"],answer:"A. 35 — Total of 5=135, total of 4=100. Excluded = 35.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"q10",tab:"quants",subtopic:"Alligation & Mixtures",q:"Rice at ₹40/kg mixed with rice at ₹60/kg to get ₹50/kg mixture. Ratio?",options:["A. 1:1","B. 1:2","C. 2:1","D. 3:2"],answer:"A. 1:1 — By alligation: (60-50):(50-40) = 10:10 = 1:1.",source:"PrepInsta Pattern (Recalled)"},
+
+  {id:"v1",tab:"verbal",subtopic:"Reading & Listening",q:"Communication round (recalled): Read and Repeat aloud.\nExample sentence: 'The quarterly revenue exceeded all previous benchmarks set by the organization.'",answer:"Practice: Read news articles aloud daily. Focus on clarity, pronunciation, and pace.",source:"GFG Interview Experience 2024 (Recalled)"},
+  {id:"v2",tab:"verbal",subtopic:"Extempore Speaking",q:"Extempore topic (recalled): 'Your favourite weather' — Speak for 1 minute.",answer:"Structure: Introduction (5s) → 3 main points (40s) → Conclusion (15s). Use descriptive language.",source:"GFG Interview Experience 2024 (Recalled)"},
+  {id:"v3",tab:"verbal",subtopic:"Extempore Speaking",q:"Extempore topic (recalled): 'Smart Work vs Hard Work' — Speak for 1 minute.",answer:"Opener: 'Both are essential — smart work maximizes efficiency, hard work ensures persistence.'",source:"GFG Interview Experience 2024 (Recalled)"},
+  {id:"v4",tab:"verbal",subtopic:"Extempore Speaking",q:"Extempore topic (recalled): 'Your favourite sport' — Speak for 1 minute.",answer:"Structure: Name sport → Why you like it → Personal experience → How it benefits you → Close.",source:"GFG Interview Experience 2024 (Recalled)"},
+  {id:"v5",tab:"verbal",subtopic:"Grammar Fill Blanks",q:"'Despite being the smallest country, Vatican City _______ a significant influence on global affairs.'\nA. exerts  B. exerting  C. exert  D. exerted",options:["A. exerts","B. exerting","C. exert","D. exerted"],answer:"A. exerts — Singular subject 'Vatican City' → third person singular present.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"v6",tab:"verbal",subtopic:"Grammar Fill Blanks",q:"'The committee _______ its decision after a long deliberation.'\nA. announce  B. announced  C. announcing  D. will announce",options:["A. announce","B. announced","C. announcing","D. will announce"],answer:"B. announced — Past tense: 'after a long deliberation' = completed action.",source:"PrepInsta Pattern (Recalled)"},
+
+  {id:"p1",tab:"pseudocode",subtopic:"Bitwise Operations",q:"What is 5 & 3 (bitwise AND)?",options:["A. 0","B. 1","C. 7","D. 6"],answer:"B. 1 — 5=101, 3=011. AND=001=1.",source:"GFG Interview Experience (Recalled)"},
+  {id:"p2",tab:"pseudocode",subtopic:"Bitwise Operations",q:"What is 5 | 3 (bitwise OR)?",options:["A. 1","B. 6","C. 7","D. 0"],answer:"C. 7 — 5=101, 3=011. OR=111=7.",source:"GFG Interview Experience (Recalled)"},
+  {id:"p3",tab:"pseudocode",subtopic:"Bitwise Operations",q:"What is 5 ^ 3 (bitwise XOR)?",options:["A. 1","B. 6","C. 7","D. 2"],answer:"B. 6 — 5=101, 3=011. XOR=110=6.",source:"GFG Interview Experience (Recalled)"},
+  {id:"p4",tab:"pseudocode",subtopic:"Loop Tracing",q:"Output?\nx = 5\nwhile x > 0:\n    print(x)\n    x = x - 2",options:["A. 5 3 1","B. 5 3 1 -1","C. 5 4 3 2 1","D. Infinite"],answer:"A. 5 3 1 — x goes 5→3→1→-1 (loop stops).",source:"PrepInsta Pattern (Recalled)"},
+  {id:"p5",tab:"pseudocode",subtopic:"Recursion",q:"What does this return?\ndef mystery(n):\n    if n==0: return 1\n    return n * mystery(n-1)\nmystery(4)",options:["A. 4","B. 10","C. 24","D. 12"],answer:"C. 24 — This is factorial. 4!=24.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"p6",tab:"pseudocode",subtopic:"Bitwise Operations",q:"What is ~5 (bitwise NOT) in 32-bit system?",options:["A. -5","B. -6","C. 4","D. 6"],answer:"B. -6 — ~n = -(n+1). ~5 = -6.",source:"GFG Interview Experience (Recalled)"},
+  {id:"p7",tab:"pseudocode",subtopic:"Loop Tracing",q:"Output?\nfor i in range(1, 5):\n    if i % 2 == 0:\n        print(i)",options:["A. 1 3","B. 2 4","C. 1 2 3 4","D. 0 2 4"],answer:"B. 2 4 — Only even numbers from 1-4.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"p8",tab:"pseudocode",subtopic:"Array Logic",q:"arr=[3,1,4,1,5,9,2]\nmax_val=arr[0]\nfor x in arr:\n    if x>max_val: max_val=x\nreturn max_val",options:["A. 3","B. 9","C. 5","D. 1"],answer:"B. 9 — Finds maximum value in array.",source:"PrepInsta Pattern (Recalled)"},
+
+  {id:"c1",tab:"coding",subtopic:"Arrays",q:"[ACTUAL RECALLED — PGET 2025] Odd/Even Sequence Check:\nA sequence is 'exceptional' if no two neighbors are both odd or both even.\nInput: [1,4,1,4,2,8] — Output?",answer:"Output: NO — 4 and 2 are neighbors and both even.\n\nApproach: Check if arr[i] and arr[i+1] have same parity.\n\nJava:\nboolean isExceptional(int[] arr) {\n  for(int i=0;i<arr.length-1;i++)\n    if(arr[i]%2 == arr[i+1]%2) return false;\n  return true;\n}",source:"GFG PGET 2025 — ACTUAL RECALLED"},
+  {id:"c2",tab:"coding",subtopic:"Arrays",q:"[ACTUAL RECALLED — PGET 2025] Repeatedly remove minimum element and its neighbors. Sum all removed minimums.\nInput: [7,6,4,9,10,34,56,54]\nExpected Output: 68",answer:"Approach: Find min, remove it + neighbors. Repeat. Sum the minimums.\n\nPython hint:\ndef solve(arr):\n    total = 0\n    while arr:\n        m = min(arr)\n        i = arr.index(m)\n        total += m\n        arr = arr[:max(0,i-1)] + arr[i+2:]\n    return total",source:"GFG PGET 2025 — ACTUAL RECALLED"},
+  {id:"c3",tab:"coding",subtopic:"Strings",q:"[ACTUAL RECALLED] Find string with maximum ODD length from a list.\nInput: ['hello','hi','world','hey','programming']\nOutput: 'programming'",answer:"Python:\ndef maxOddLength(arr):\n    odd=[s for s in arr if len(s)%2!=0]\n    return max(odd,key=len) if odd else ''",source:"PrepInsta Coding (Recalled)"},
+  {id:"c4",tab:"coding",subtopic:"Arrays",q:"Find all pairs in array with given sum.\nInput: arr=[1,5,3,2,4], target=5\nOutput: (1,4),(2,3)",answer:"Python:\ndef findPairs(arr,target):\n    seen=set(); pairs=[]\n    for n in arr:\n        if target-n in seen: pairs.append((target-n,n))\n        seen.add(n)\n    return pairs\n# O(n) time",source:"PrepInsta/GFG Pattern (Recalled)"},
+  {id:"c5",tab:"coding",subtopic:"Strings",q:"Check if two strings are anagrams.\nInput: 'listen','silent'\nOutput: True",answer:"Python:\ndef isAnagram(s1,s2):\n    return sorted(s1)==sorted(s2)\n# Or: Counter(s1)==Counter(s2)\n# O(n log n) sort / O(n) Counter",source:"PrepInsta/GFG Pattern (Recalled)"},
+  {id:"c6",tab:"coding",subtopic:"SQL",q:"[RECALLED — PGET had SQL] Write query for second highest salary from Employee table.",answer:"SELECT MAX(salary) FROM Employee\nWHERE salary < (SELECT MAX(salary) FROM Employee);\n\n-- Or DENSE_RANK:\nSELECT salary FROM (\n  SELECT salary,\n  DENSE_RANK() OVER (ORDER BY salary DESC) rnk\n  FROM Employee) t WHERE rnk=2;",source:"GFG PGET — Coding had 2 DSA + 1 SQL (Recalled)"},
+  {id:"c7",tab:"coding",subtopic:"Arrays",q:"Find second largest element.\nInput: [10,5,8,20,15]\nOutput: 15",answer:"Python:\ndef secondLargest(arr):\n    u=sorted(set(arr))\n    return u[-2] if len(u)>=2 else None\n# O(n log n). Can do O(n) with two-pass.",source:"PrepInsta Pattern (Recalled)"},
+  {id:"c8",tab:"coding",subtopic:"Strings",q:"Count each character's occurrences.\nInput: 'hexaware'\nOutput: {h:1,e:2,x:1,a:1,w:1,r:1}",answer:"Python:\ndef charCount(s):\n    freq={}\n    for c in s: freq[c]=freq.get(c,0)+1\n    return freq\n# Or: Counter(s)",source:"PrepInsta Pattern (Recalled)"},
+
+  {id:"t1",tab:"technical",subtopic:"Data Structures",q:"Which data structure uses LIFO (Last In First Out)?",options:["A. Queue","B. Stack","C. Linked List","D. Tree"],answer:"B. Stack — Last pushed = first popped.",source:"PrepInsta Tech MCQ (Recalled)"},
+  {id:"t2",tab:"technical",subtopic:"Algorithms",q:"Time complexity of Binary Search?",options:["A. O(n)","B. O(n²)","C. O(log n)","D. O(n log n)"],answer:"C. O(log n) — Halves search space each time.",source:"PrepInsta Tech MCQ (Recalled)"},
+  {id:"t3",tab:"technical",subtopic:"Sorting",q:"Which sort is stable AND O(n log n) worst case?",options:["A. Quick Sort","B. Bubble Sort","C. Merge Sort","D. Heap Sort"],answer:"C. Merge Sort — Always O(n log n), stable.",source:"PrepInsta Tech MCQ (Recalled)"},
+  {id:"t4",tab:"technical",subtopic:"DBMS",q:"What is a Foreign Key?",options:["A. Primary key of same table","B. References primary key of another table","C. A unique index","D. A composite key"],answer:"B. References primary key of another table — Enforces referential integrity.",source:"Freshers.jobs Tech MCQ (Recalled)"},
+  {id:"t5",tab:"technical",subtopic:"Networks",q:"Key difference between TCP and UDP?",options:["A. TCP is faster","B. UDP is connection-oriented","C. TCP is connection-oriented, UDP connectionless","D. No difference"],answer:"C. TCP is connection-oriented, UDP is connectionless — TCP = reliable; UDP = fast.",source:"InterviewBit/PrepInsta (Recalled)"},
+  {id:"t6",tab:"technical",subtopic:"OOPs",q:"Difference between Abstract Class and Interface in Java?",options:["A. No difference","B. Abstract class can have method bodies; Interface (pre-Java 8) cannot","C. Interface can have constructors","D. Abstract class = multiple inheritance"],answer:"B. Abstract class can have method bodies — Interface (pre-Java 8) only abstract methods.",source:"Freshers.jobs Technical (Recalled)"},
+  {id:"t7",tab:"technical",subtopic:"OOPs",q:"What is Encapsulation?",options:["A. Hiding method logic","B. Bundling data+methods, restricting direct access","C. One class inheriting another","D. Multiple forms of a method"],answer:"B. Bundling data+methods with access control via getters/setters.",source:"PrepInsta Tech MCQ (Recalled)"},
+  {id:"t8",tab:"technical",subtopic:"OS",q:"What is a deadlock in Operating Systems?",options:["A. 100% CPU usage","B. Processes waiting for each other's resources indefinitely","C. Memory overflow","D. Process terminated"],answer:"B. Circular wait — processes stuck waiting for resources held by each other.",source:"Freshers.jobs Technical (Recalled)"},
+  {id:"t9",tab:"technical",subtopic:"DBMS",q:"What does normalization do?",options:["A. Increases redundancy","B. Reduces redundancy by organizing data","C. Combines all tables","D. Adds indexes"],answer:"B. Reduces redundancy — 1NF,2NF,3NF ensure efficient data storage.",source:"PrepInsta Tech MCQ (Recalled)"},
+  {id:"t10",tab:"technical",subtopic:"Algorithms",q:"Space complexity of recursive factorial?",options:["A. O(1)","B. O(log n)","C. O(n)","D. O(n²)"],answer:"C. O(n) — n recursive calls = n stack frames.",source:"PrepInsta Tech MCQ (Recalled)"},
+  {id:"te1",tab:"technical",subtopic:"SDLC & Models",q:"What are the software development models?",answer:"1. Waterfall — Linear sequential phases\n2. Agile — Iterative sprints, flexible\n3. Spiral — Risk-driven, iterative+waterfall\n4. V-Model — Each dev phase has test phase\n5. RAD — Rapid prototyping\n6. Incremental — Delivered in modules\n\nMost asked: Waterfall, Agile, V-Model.",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te2",tab:"technical",subtopic:"SDLC & Models",q:"What are the basics of SDLC?",answer:"Software Development Life Cycle phases:\n1. Requirement Gathering & Analysis\n2. System Design (HLD & LLD)\n3. Implementation / Coding\n4. Testing (Unit, Integration, System, UAT)\n5. Deployment\n6. Maintenance\n\nWhy SDLC? Ensures quality, reduces risk, controls cost.",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te3",tab:"technical",subtopic:"Networking",q:"What is a protocol?",answer:"A protocol is a set of rules governing communication between devices.\n\nExamples:\n• HTTP/HTTPS — Web communication\n• TCP/IP — Reliable data transmission\n• UDP — Fast, connectionless\n• FTP — File transfer\n• SMTP — Email\n• DNS — Domain to IP\n• SSH — Secure remote login",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te4",tab:"technical",subtopic:"Coding — C",q:"Write code to add N natural numbers.",answer:"// C (Loop):\n#include <stdio.h>\nint main() {\n    int n, sum=0;\n    scanf(\"%d\",&n);\n    for(int i=1;i<=n;i++) sum+=i;\n    printf(\"Sum=%d\",sum);\n}\n\n// Formula O(1):\n// Sum = n*(n+1)/2\n\n// Python:\nn=int(input())\nprint(n*(n+1)//2)",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te5",tab:"technical",subtopic:"Coding — C",q:"Write code to add ASCII values of A to Z.",answer:"// C:\n#include <stdio.h>\nint main() {\n    int sum=0;\n    for(char c='A';c<='Z';c++)\n        sum+=(int)c;\n    printf(\"%d\",sum); // Output: 2015\n}\n\n// Python:\nprint(sum(ord(c) for c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'))\n# Output: 2015\n# A=65, Z=90. 26 terms, avg=77.5, sum=26×77.5=2015",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te6",tab:"technical",subtopic:"OOPs",q:"What are the basic OOPs concepts?",answer:"4 Pillars:\n\n1. ENCAPSULATION — Bundle data+methods; access via getters/setters.\n\n2. ABSTRACTION — Hide implementation; show only needed parts.\n   (Abstract class / Interface)\n\n3. INHERITANCE — Child class acquires parent properties.\n   Types: Single, Multi-level, Hierarchical, Multiple (via interface)\n\n4. POLYMORPHISM — Same name, different behavior.\n   • Overloading (compile-time)\n   • Overriding (runtime)",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te7",tab:"technical",subtopic:"OOPs",q:"What is an Abstract Class?",answer:"Cannot be instantiated directly. May have abstract methods (no body) and concrete methods (with body).\n\n// Java:\nabstract class Shape {\n    abstract void draw(); // must override\n    void color() { System.out.println(\"Colored\"); }\n}\nclass Circle extends Shape {\n    void draw() { System.out.println(\"Drawing Circle\"); }\n}\n\nKey: Must implement all abstract methods in subclass.",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te8",tab:"technical",subtopic:"DBMS",q:"What do you mean by DBMS?",answer:"Database Management System — software to store, retrieve, and manage data.\n\nExamples: MySQL, Oracle, SQL Server\n\nFunctions:\n• Data storage & retrieval\n• Security & access control\n• Concurrency control\n• Backup & recovery\n• Data integrity\n\nRDBMS = Relational (tables)\nNoSQL = Non-relational (MongoDB etc.)",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te9",tab:"technical",subtopic:"DBMS",q:"Difference between NoSQL and SQL?",answer:"SQL (Relational):\n• Structured tables, fixed schema\n• Uses SQL language\n• ACID properties\n• Best: banking, ERP\n• Examples: MySQL, PostgreSQL\n\nNoSQL:\n• Schema-less, flexible\n• Document/Key-Value/Column/Graph\n• Horizontally scalable\n• Best: big data, real-time apps\n• Examples: MongoDB, Redis, Cassandra\n\nSQL = consistent+structured; NoSQL = flexible+scalable.",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te10",tab:"technical",subtopic:"Languages",q:"Java vs C++ — key differences?",answer:"| Feature | Java | C++ |\n|---|---|---|\n| Platform | Independent (JVM) | Dependent |\n| Memory | Garbage Collector | Manual (new/delete) |\n| Pointers | No direct support | Full support |\n| Multiple Inherit. | Via interface | Direct |\n| Speed | Slower | Faster |\n| Use case | Web/Android | System/Games |\n\nJava = safer, portable. C++ = faster, more control.",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te11",tab:"technical",subtopic:"C Language",q:"What are Pointers? What are Stacks and Queues?",answer:"POINTERS: Variable storing memory address of another variable.\nint a=10; int *p=&a; // p = address of a\nprintf(\"%d\",*p); // prints 10\n\nSTACK (LIFO):\n• push(), pop(), peek()\n• Uses: function calls, undo, expression eval\n\nQUEUE (FIFO):\n• enqueue(), dequeue()\n• Uses: CPU scheduling, BFS, printer queue\n• Types: Simple, Circular, Priority, Deque",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te12",tab:"technical",subtopic:"C Language",q:"Two differences between C and C++?",answer:"1. OOP Support:\n   C: Procedural — no classes/objects\n   C++: Object-Oriented — classes, inheritance, polymorphism\n\n2. Function Overloading:\n   C: NOT supported\n   C++: Supported (also operator overloading)\n\n3. Memory:\n   C: malloc()/free()\n   C++: new/delete\n\n4. I/O:\n   C: printf/scanf\n   C++: cin/cout",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te13",tab:"technical",subtopic:"Sorting & Programs",q:"Write Bubble Sort program.",answer:"// Java:\nvoid bubbleSort(int[] arr) {\n    int n=arr.length;\n    for(int i=0;i<n-1;i++)\n        for(int j=0;j<n-i-1;j++)\n            if(arr[j]>arr[j+1]) {\n                int t=arr[j]; arr[j]=arr[j+1]; arr[j+1]=t;\n            }\n}\n\n// Python:\ndef bubble_sort(arr):\n    n=len(arr)\n    for i in range(n-1):\n        for j in range(n-i-1):\n            if arr[j]>arr[j+1]:\n                arr[j],arr[j+1]=arr[j+1],arr[j]\n\n// O(n²) worst/avg. O(n) best (sorted). In-place.",source:"Hexaware SET Technical (Recalled)"},
+  {id:"te14",tab:"technical",subtopic:"OOPs",q:"Write an Inheritance program in Java.",answer:"class Animal {\n    String name;\n    Animal(String name) { this.name=name; }\n    void eat() { System.out.println(name+\" eating\"); }\n}\n\nclass Dog extends Animal {\n    Dog(String name) { super(name); }\n    void bark() { System.out.println(name+\" barking\"); }\n}\n\npublic class Main {\n    public static void main(String[] a) {\n        Dog d=new Dog(\"Tommy\");\n        d.eat();  // inherited\n        d.bark(); // own method\n    }\n}\n\nOutput:\nTommy eating\nTommy barking",source:"Hexaware SET Technical (Recalled)"},
+
+  {id:"h1",tab:"hr",subtopic:"Introduction",q:"Introduce yourself / Tell me about yourself.",answer:"Structure: Name → Education → Skills → Projects/Internship → Why Hexaware.\nTip: Keep to 90 seconds. End: 'That's why I'm excited about Hexaware.'",source:"GFG Multiple Experiences (Recalled — every round)"},
+  {id:"h2",tab:"hr",subtopic:"Company Knowledge",q:"Tell me about Hexaware Technologies.",answer:"Founded 1990, HQ Navi Mumbai. Global IT+BPO services.\nFocus: Automation, AI-led transformation.\nDomains: Banking, Healthcare, Travel, Manufacturing.\nStrategy: 'Automate Everything, Cloudify Everything, Transform at Scale.'",source:"GFG Multiple Experiences (Recalled)"},
+  {id:"h3",tab:"hr",subtopic:"Relocation",q:"Are you willing to relocate or travel?",answer:"Always YES for fresher role.\n'Yes, absolutely. I'm open to relocating wherever needed. Different environments help professional growth.'",source:"GFG Multiple Experiences (Recalled)"},
+  {id:"h4",tab:"hr",subtopic:"Career Goals",q:"Where do you see yourself in 5 years?",answer:"'In 5 years, I see myself as a technically strong developer who has contributed to meaningful Hexaware projects. I aim to grow into a senior role and possibly lead small modules.'",source:"GFG PGET 2025 (Recalled)"},
+  {id:"h5",tab:"hr",subtopic:"Strengths & Weaknesses",q:"What are your strengths and weaknesses?",answer:"Strength: 'I'm a quick learner — I enjoy problem-solving and break down bugs methodically.'\n\nWeakness: 'I sometimes over-perfect details. I've been working on time-boxing tasks to improve.'",source:"GFG Interview 2024 (Recalled)"},
+  {id:"h6",tab:"hr",subtopic:"Bond & Agreement",q:"Are you aware of the service bond/agreement?",answer:"'Yes, I'm aware of the service agreement and comfortable with it. I'm committed to growing with Hexaware long-term.'",source:"GFG Multiple Experiences (Recalled)"},
+  {id:"h7",tab:"hr",subtopic:"Self Differentiation",q:"What differentiates you from other candidates?",answer:"'I've built real projects using Java and MySQL. I practice coding regularly on LeetCode. My hands-on learning approach sets me apart.'",source:"GFG Interview 2024 (Recalled)"},
+  {id:"h8",tab:"hr",subtopic:"Situation Based",q:"Team member not completing tasks on time, affecting project. What do you do?",answer:"1) Talk privately — understand the reason\n2) Offer help if they're stuck\n3) If persistent, escalate to manager with data\n\nShow: collaborative, not confrontational.",source:"GFG Interview 2024 (Recalled)"},
+  {id:"h9",tab:"hr",subtopic:"Eligibility",q:"What makes you think you are eligible for this job?",answer:"Cover 3 things:\n1. Technical: 'Strong foundation in Java and DBMS'\n2. Practical: 'Built [project] applying OOP and SQL'\n3. Attitude: 'Quick learner, adaptable, committed'\n\nEnd: 'My skills + Hexaware's training = productive contributor from day one.'",source:"Hexaware SET HR (Recalled)"},
+  {id:"h10",tab:"hr",subtopic:"Strengths & Weaknesses",q:"Tell us TWO weaknesses and TWO strengths.",answer:"STRENGTHS:\n1. 'Strong problem-solving — break complex problems step by step'\n2. 'Fast learner — picked up Python in 3 weeks for a project'\n\nWEAKNESSES:\n1. 'Perfectionist — working on time-boxing tasks'\n2. 'Public speaking was a challenge — actively doing GDs to improve'\n\nGolden rule: Be genuine. Never say 'I'm too hardworking'.",source:"Hexaware SET HR (Recalled)"},
+  {id:"h11",tab:"hr",subtopic:"Fun / Feedback",q:"How would you rate us as interviewers?",answer:"'I'd rate 8/10. Questions were well-structured and helped me showcase both technical and communication skills. The professional yet comfortable atmosphere helped me think clearly. I hold 2 points for scope of improvement — for both of us.'\n\nDo: Be positive and specific. Don't: Say 10/10 (flattering) or give low rating.",source:"Hexaware SET HR (Recalled)"},
+  {id:"h12",tab:"hr",subtopic:"Ethics",q:"Would you lie for the company?",answer:"'I believe honesty is the foundation of trust professionally. I would not lie — it can damage the company's reputation and my integrity. However, I understand confidentiality — I'd maintain it without lying. I'd always find an honest, diplomatic way to handle difficult situations.'\n\nKey: Show integrity + maturity.",source:"Hexaware SET HR (Recalled)"},
+  {id:"h13",tab:"hr",subtopic:"Inspiration",q:"Who has inspired you in your life and why?",answer:"Sample (APJ Abdul Kalam):\n'Dr. Kalam inspired me most. From a humble background, he became President and a great scientist. His belief — dreams + dedication = achievement — kept me motivated during tough times in college. I relate his persistence to how I approach learning new technologies.'\n\nTip: Link one quality of your inspiration to YOUR behavior.",source:"Hexaware SET HR (Recalled)"},
+  {id:"h14",tab:"hr",subtopic:"Self Awareness",q:"What are three qualities your friends will describe you having?",answer:"'My friends would say:\n1. Reliable — I follow through on commitments, group projects, deadlines.\n2. Curious — Always learning; friends come to me for tech explanations.\n3. Calm under pressure — During exam crunches, I stay composed and help the team focus.'\n\nTip: These should subtly say: good team player + good employee.",source:"Hexaware SET HR (Recalled)"},
+  {id:"h15",tab:"hr",subtopic:"Career Options",q:"What are the career options you have right now?",answer:"'I have a few options currently. However, Hexaware is my first preference because of its focus on automation, AI transformation, and strong fresher learning culture. The growth opportunities here align best with my long-term goals.'\n\nDO: Mention Hexaware as priority.\nDON'T: Say you have no options (desperate) or Hexaware is last resort.",source:"Hexaware SET HR (Recalled)"},
+
+  {id:"g1",tab:"gd",subtopic:"Technology",q:"Impact of AI on Employment — Will AI take away jobs?",answer:"FOR: Automates repetitive jobs, reduces cost.\nAGAINST: Creates new roles (AI trainers, prompt engineers), boosts efficiency.\nConclusion: AI transforms jobs, doesn't eliminate them. Upskilling is the solution.",source:"GFG PGET 2025 — ACTUAL GD TOPIC (Recalled)"},
+  {id:"g2",tab:"gd",subtopic:"Productivity",q:"Is having a Deadline good for enhancing productivity?",answer:"FOR: Creates urgency, reduces procrastination, improves time management.\nAGAINST: Causes stress, can reduce quality, leads to burnout.\nConclusion: Realistic deadlines boost productivity; unrealistic ones harm it.",source:"GFG PGET 2025 — ACTUAL GD TOPIC (Recalled)"},
+  {id:"g3",tab:"gd",subtopic:"Life Philosophy",q:"Hard Work vs Smart Work — Which is more important?",answer:"Hard Work: Persistence, builds character.\nSmart Work: Maximizes output, uses resources efficiently.\nConclusion: Both needed — smart without hard = shortcuts; hard without smart = inefficiency.",source:"GFG GET 2024/PGET 2025 — ACTUAL GD TOPIC (Recalled)"},
+  {id:"g4",tab:"gd",subtopic:"Lifestyle",q:"City Life vs Village Life — Which is better?",answer:"City: Opportunities, infrastructure, education, career.\nVillage: Less pollution, community, peace, lower cost.\nConclusion: Depends on priorities. Smart cities combining both = ideal.",source:"GFG PGET 2025 — ACTUAL GD TOPIC (Recalled)"},
+  {id:"g5",tab:"gd",subtopic:"Technology",q:"Social Media — Boon or Bane?",answer:"Boon: Connects globally, business opportunities, information.\nBane: Mental health, fake news, privacy, addiction.\nConclusion: It's a tool — impact depends on responsible use.",source:"Common Hexaware GD (Recalled from multiple drives)"},
+  {id:"g6",tab:"gd",subtopic:"Education",q:"Should coding be mandatory in school curriculum?",answer:"FOR: Digital era demands it, improves logical thinking.\nAGAINST: Not all pursue tech, rural resource constraints.\nConclusion: Computational thinking = mandatory. Advanced coding = optional.",source:"Common Hexaware GD (Recalled)"},
+];
+
+const BUILT_IN_TABS=[
+  {id:"logical",label:"Logical Reasoning",icon:"🧠"},
+  {id:"quants",label:"Quants",icon:"🔢"},
+  {id:"verbal",label:"Verbal",icon:"📖"},
+  {id:"pseudocode",label:"Pseudocode",icon:"💡"},
+  {id:"coding",label:"Coding",icon:"💻"},
+  {id:"technical",label:"Technical",icon:"⚙️"},
+  {id:"hr",label:"HR Interview",icon:"🗣️"},
+  {id:"gd",label:"Group Discussion",icon:"👥"},
+];
+let TABS = [...BUILT_IN_TABS]; // will merge custom tabs from Firestore
+
+// ── STATE ────────────────────────────────────
+let currentUser = null;
+let activeTab = "logical";
+let activeFilter = "all";
+let activeSubtopic = "all";
+let searchTerm = "";
+let userProgress = {};
+let extraQuestions = [];
+let customTabs = [];       // user-created tabs from Firestore
+let dailyQuestions = [];   // daily practice questions from Firestore
+let myDailyAttempts = {};  // { questionId: { answered, correct, userAnswer, attempts, ... } } for current user
+let unsubProgress = null;
+let unsubExtra = null;
+let unsubTabs = null;
+let unsubDaily = null;
+let unsubMyDailyAttempts = null;
+let uploadOpen = true;
+let dailyMode = false;     // are we in Daily Practice mode?
+
+// ── ADMIN STATE ──────────────────────────────
+const ADMIN_USER = "admin";
+let viewingUser = null;          // null = admin viewing own, string = impersonating a user
+let allUsersProgress = {};       // { username: { qid: true, ... } }
+let unsubAllUsers = null;        // listener for all progress docs
+let allUsersRegistry = {};       // { username: { displayName, lastSeen } } from "users" collection
+let unsubAllUsersRegistry = null;
+let allUsersDailyAttempts = {};  // { "username_qid": { ...attempt } } from "dailyAttempts" collection
+let unsubAllDailyAttempts = null;
+
+// ── LOGIN ────────────────────────────────────
+document.getElementById("nameInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") doLogin();
+});
+
+function doLogin() {
+  const name = document.getElementById("nameInput").value.trim();
+  if(!name) { document.getElementById("loginErr").textContent = "Please enter your name!"; return; }
+  currentUser = name.toLowerCase().replace(/\s+/g,"_");
+  localStorage.setItem("hexPrep_user", name);
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("userBadge").textContent = (currentUser === ADMIN_USER ? "👑 " : "👤 ") + name;
+  // Register this user so admin can see them even if they never mark a question done
+  if(currentUser !== ADMIN_USER) {
+    db.collection("users").doc(currentUser).set({
+      username: currentUser,
+      displayName: name,
+      lastSeen: Date.now()
+    }, { merge: true });
+  }
+  subscribeToFirebase();
+  if(currentUser === ADMIN_USER) subscribeAdminData();
+  renderAll();
+}
+
+function doLogout() {
+  if(unsubProgress) unsubProgress();
+  if(unsubExtra) unsubExtra();
+  if(unsubTabs) unsubTabs();
+  if(unsubDaily) unsubDaily();
+  if(unsubMyDailyAttempts) { unsubMyDailyAttempts(); unsubMyDailyAttempts = null; }
+  if(unsubAllUsers) { unsubAllUsers(); unsubAllUsers = null; }
+  if(unsubAllUsersRegistry) { unsubAllUsersRegistry(); unsubAllUsersRegistry = null; }
+  if(unsubAllDailyAttempts) { unsubAllDailyAttempts(); unsubAllDailyAttempts = null; }
+  allUsersRegistry = {};
+  allUsersDailyAttempts = {};
+  myDailyAttempts = {};
+  currentUser = null; viewingUser = null; userProgress = {};
+  extraQuestions = []; customTabs = []; dailyQuestions = [];
+  allUsersProgress = {};
+  dailyMode = false;
+  TABS = [...BUILT_IN_TABS];
+  localStorage.removeItem("hexPrep_user");
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("nameInput").value = "";
+  document.getElementById("adminUserBar").style.display = "none";
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("viewModeBanner").style.display = "none";
+}
+
+// ── AUTO-LOGIN ON REFRESH ─────────────────────
+(function autoLogin() {
+  const saved = localStorage.getItem("hexPrep_user");
+  if(saved) {
+    currentUser = saved.toLowerCase().replace(/\s+/g,"_");
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("userBadge").textContent = (currentUser === ADMIN_USER ? "👑 " : "👤 ") + saved;
+    document.getElementById("nameInput").value = saved;
+    subscribeToFirebase();
+    if(currentUser === ADMIN_USER) subscribeAdminData();
+    renderAll();
+  }
+})();
+
+// ── FIREBASE SYNC ────────────────────────────
+function setSyncing(on) {
+  const dot = document.getElementById("syncDot");
+  const lbl = document.getElementById("syncLbl");
+  dot.className = "sync-dot" + (on ? " syncing" : "");
+  lbl.textContent = on ? "Syncing..." : "Live ✓";
+}
+
+function subscribeToFirebase() {
+  // Progress (per user)
+  unsubProgress = db.collection("progress").doc(currentUser)
+    .onSnapshot(snap => {
+      userProgress = snap.exists ? (snap.data() || {}) : {};
+      renderAll();
+      setSyncing(false);
+    });
+
+  // Extra questions (shared)
+  unsubExtra = db.collection("questions")
+    .onSnapshot(snap => {
+      extraQuestions = snap.docs.map(d => d.data());
+      renderAll();
+    });
+
+  // Custom tabs (shared)
+  unsubTabs = db.collection("customTabs")
+    .onSnapshot(snap => {
+      customTabs = snap.docs.map(d => d.data());
+      TABS = [...BUILT_IN_TABS, ...customTabs.map(t=>({id:t.id,label:t.label,icon:t.icon||"📁"}))];
+      renderAll();
+    });
+
+  // Daily practice questions (shared)
+  unsubDaily = db.collection("daily")
+    .onSnapshot(snap => {
+      dailyQuestions = snap.docs.map(d => d.data());
+      if(dailyMode) renderDailyMode();
+    });
+
+  // This user's daily attempts (persisted per user)
+  unsubMyDailyAttempts = db.collection("dailyAttempts")
+    .where("username", "==", currentUser)
+    .onSnapshot(snap => {
+      myDailyAttempts = {};
+      snap.docs.forEach(d => {
+        const a = d.data();
+        myDailyAttempts[a.questionId] = a;
+      });
+      if(dailyMode) renderDailyMode();
+    });
+}
+
+function saveProgress(qid, done) {
+  setSyncing(true);
+  const ref = db.collection("progress").doc(currentUser);
+  if (done) {
+    ref.set({ [qid]: true }, { merge: true });
+  } else {
+    ref.update({ [qid]: firebase.firestore.FieldValue.delete() });
+  }
+}
+
+function saveExtraQuestion(q) {
+  setSyncing(true);
+  db.collection("questions").doc(q.id).set(q);
+}
+
+function deleteExtraQuestion(qid) {
+  setSyncing(true);
+  db.collection("questions").doc(qid).delete();
+}
+
+// ── ADMIN FUNCTIONS ──────────────────────────
+function subscribeAdminData() {
+  // Listen to ALL progress documents to get per-user done counts
+  unsubAllUsers = db.collection("progress")
+    .onSnapshot(snap => {
+      allUsersProgress = {};
+      snap.docs.forEach(d => { allUsersProgress[d.id] = d.data() || {}; });
+      renderAdminBar();
+      renderAdminPanel();
+    });
+
+  // Listen to users registry — everyone who has ever logged in
+  unsubAllUsersRegistry = db.collection("users")
+    .onSnapshot(snap => {
+      allUsersRegistry = {};
+      snap.docs.forEach(d => { allUsersRegistry[d.id] = d.data() || {}; });
+      renderAdminBar();
+      renderAdminPanel();
+    });
+
+  // Listen to all daily attempts — so admin can see per-user daily practice
+  unsubAllDailyAttempts = db.collection("dailyAttempts")
+    .onSnapshot(snap => {
+      allUsersDailyAttempts = {};
+      snap.docs.forEach(d => { allUsersDailyAttempts[d.id] = d.data() || {}; });
+      // Always re-render daily mode for admin so table stays live
+      if(currentUser === ADMIN_USER) {
+        if(dailyMode) renderDailyMode();
+        else renderAdminPanel(); // update progress counts even outside daily mode
+      }
+    });
+}
+
+function getKnownUsers() {
+  // Merge registry (everyone who logged in) with progress docs, exclude admin
+  const fromRegistry = Object.keys(allUsersRegistry).filter(u => u !== ADMIN_USER);
+  const fromProgress = Object.keys(allUsersProgress).filter(u => u !== ADMIN_USER);
+  const all = new Set([...fromRegistry, ...fromProgress]);
+  return [...all].sort();
+}
+
+function renderAdminBar() {
+  if(currentUser !== ADMIN_USER) return;
+  const bar = document.getElementById("adminUserBar");
+  const chips = document.getElementById("adminUserChips");
+  const users = getKnownUsers();
+  bar.style.display = "flex";
+
+  // "My View" chip (admin's own data)
+  const selfActive = viewingUser === null;
+  let html = `<button class="admin-user-chip self-chip ${selfActive?'viewing':''}" onclick="adminSwitchUser(null)">👑 Admin (me)</button>`;
+
+  users.forEach(u => {
+    const active = viewingUser === u;
+    const displayName = u.replace(/_/g," ");
+    const prog = allUsersProgress[u] || {};
+    const done = Object.keys(prog).length;
+    html += `<button class="admin-user-chip ${active?'viewing':''}" onclick="adminSwitchUser('${u}')">
+      👤 ${esc(displayName)}${done ? ` <span style="font-size:0.62rem;opacity:0.7">(${done}✓)</span>` : ''}
+    </button>`;
+  });
+
+  chips.innerHTML = html;
+}
+
+function adminSwitchUser(username) {
+  viewingUser = username;
+  if(username === null) {
+    // Restore admin's own progress from the snapshot we already have
+    userProgress = { ...(allUsersProgress[ADMIN_USER] || {}) };
+  } else {
+    userProgress = { ...(allUsersProgress[username] || {}) };
+  }
+  renderAdminBar();
+  renderViewModeBanner();
+  renderAdminPanel();
+  renderAll();
+}
+
+function renderViewModeBanner() {
+  const banner = document.getElementById("viewModeBanner");
+  if(currentUser !== ADMIN_USER || viewingUser === null) {
+    banner.style.display = "none";
+    return;
+  }
+  const displayName = viewingUser.replace(/_/g," ");
+  banner.style.display = "flex";
+  banner.innerHTML = `
+    <div class="view-mode-banner">
+      <span>👁 Viewing data for <strong>${esc(displayName)}</strong> — all tabs and scores reflect this user's progress.</span>
+      <button class="btn-exit-view" onclick="adminSwitchUser(null)">✕ Back to my view</button>
+    </div>`;
+}
+
+function renderAdminPanel() {
+  const panel = document.getElementById("adminPanel");
+  if(currentUser !== ADMIN_USER || dailyMode) {
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+
+  const users = getKnownUsers();
+  const allQs = [...BUILT_IN, ...extraQuestions, ...dailyQuestions];
+  const total = allQs.length;
+
+  if(!users.length) {
+    panel.innerHTML = `<div class="admin-panel">
+      <div class="admin-panel-header">
+        <div class="admin-panel-title">👑 Admin Panel</div>
+      </div>
+      <div style="color:var(--muted);font-size:0.82rem;padding:10px 0">No other users have logged in yet.</div>
+    </div>`;
+    return;
+  }
+
+  const rows = users.map(u => {
+    const prog = allUsersProgress[u] || {};
+    const done = Object.keys(prog).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const reg = allUsersRegistry[u] || {};
+    const displayName = (reg.displayName || u).replace(/_/g," ");
+    const isViewing = viewingUser === u;
+    const lastSeenStr = reg.lastSeen
+      ? new Date(reg.lastSeen).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})
+      : "—";
+    return `<tr>
+      <td>
+        <span class="user-chip-inline">👤 ${esc(displayName)}</span>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:3px">🕐 ${lastSeenStr}</div>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="progress-mini"><div class="progress-mini-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:0.78rem;color:var(--text)">${done}/${total}</span>
+          <span style="font-size:0.68rem;color:var(--muted)">(${pct}%)</span>
+        </div>
+      </td>
+      <td>
+        <button class="admin-view-btn" onclick="adminSwitchUser('${u}')" ${isViewing?'style="background:rgba(79,127,255,0.15)"':''}>
+          ${isViewing ? '👁 Viewing' : '👁 View'}
+        </button>
+        <button class="admin-del-btn" onclick="adminDeleteUser('${u}')">🗑 Delete</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  panel.innerHTML = `<div class="admin-panel">
+    <div class="admin-panel-header">
+      <div class="admin-panel-title">👑 Admin Panel &nbsp;<span style="font-size:0.72rem;color:var(--muted);font-weight:400">${users.length} user${users.length!==1?'s':''} registered</span></div>
+    </div>
+    <table class="admin-table">
+      <thead><tr>
+        <th>Username</th>
+        <th>Progress</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function adminDeleteUser(username) {
+  const reg = allUsersRegistry[username] || {};
+  const displayName = (reg.displayName || username).replace(/_/g," ");
+  if(!confirm(`Delete all data for "${displayName}"? This cannot be undone.`)) return;
+
+  // Also delete all daily attempt docs for this user
+  const userAttemptKeys = Object.keys(allUsersDailyAttempts)
+    .filter(k => allUsersDailyAttempts[k].username === username);
+
+  const batch = db.batch();
+  userAttemptKeys.forEach(k => batch.delete(db.collection("dailyAttempts").doc(k)));
+
+  Promise.all([
+    db.collection("progress").doc(username).delete(),
+    db.collection("users").doc(username).delete(),
+    batch.commit()
+  ]).then(() => {
+    if(viewingUser === username) adminSwitchUser(null);
+    alert(`User "${displayName}" deleted.`);
+  });
+}
+
+// ── RENDER ───────────────────────────────────
+function getAllQ() { return [...BUILT_IN, ...extraQuestions]; }
+
+function renderTabs() {
+  const all = getAllQ();
+  document.getElementById("tabsWrap").innerHTML =
+    TABS.map(t => {
+      const cnt = all.filter(q => q.tab===t.id).length;
+      return `<button class="tab-btn ${!dailyMode && t.id===activeTab?'active':''}" onclick="switchTab('${t.id}')">
+        ${t.icon} ${t.label} <span class="cnt">${cnt}</span></button>`;
+    }).join("") +
+    `<button class="tab-btn ${dailyMode?'active':''}" onclick="enterDailyMode()" style="color:var(--accent2);${dailyMode?'border-bottom-color:var(--accent2)':''}">
+      ⚡ Daily Practice</button>` +
+    `<button class="tab-btn" onclick="promptNewTab()" style="color:var(--green);border-bottom:none">
+      ＋ New Tab</button>`;
+
+  // Global progress bar — includes daily practice questions
+  const allWithDaily = [...all, ...dailyQuestions];
+  const total = allWithDaily.length;
+  const done = allWithDaily.filter(q => userProgress[q.id]).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById("globalBar").style.width = pct+"%";
+  document.getElementById("globalLbl").textContent = `${done} / ${total} done`;
+}
+
+function switchTab(id) {
+  dailyMode=false; activeTab=id; activeFilter="all"; activeSubtopic="all"; searchTerm="";
+  const si=document.querySelector(".search-input"); if(si) si.value="";
+  renderAll();
+}
+
+function promptNewTab() {
+  const label = prompt("New tab name (e.g. Interview Tips):");
+  if(!label || !label.trim()) return;
+  const icon = prompt("Icon emoji (optional, press OK to skip):", "📁") || "📁";
+  const id = "ct_" + label.trim().toLowerCase().replace(/\s+/g,"_") + "_" + Date.now();
+  const newTab = {id, label: label.trim(), icon: icon.trim()||"📁"};
+  db.collection("customTabs").doc(id).set(newTab);
+  activeTab = id; dailyMode = false;
+}
+
+// ── DAILY PRACTICE MODE ──────────────────────
+function enterDailyMode() {
+  dailyMode = true;
+  renderAll();
+  // For admin: force re-render after short delay to ensure allUsersDailyAttempts is populated
+  if(currentUser === ADMIN_USER) {
+    setTimeout(() => { if(dailyMode) renderDailyMode(); }, 800);
+  }
+}
+
+function renderAll() {
+  renderTabs();
+  if(currentUser === ADMIN_USER) {
+    renderAdminBar();
+    renderViewModeBanner();
+    renderAdminPanel();
+  }
+  if(dailyMode) {
+    renderDailyMode();
+    return;
+  }
+  renderStats(); renderFilterBar(); renderSubtopicBar(); renderUpload(); renderQuestions();
+}
+
+// ── DAILY DATE STATE ─────────────────────────
+let selectedDailyDate = getTodayStr(); // "YYYY-MM-DD"
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function formatDateDisplay(dateStr) {
+  const today = getTodayStr();
+  const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const d = new Date(dateStr + "T00:00:00");
+  const dayName = d.toLocaleDateString("en-IN",{weekday:"short"});
+  const display = d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+  if(dateStr===today) return `📅 Today · ${display}`;
+  if(dateStr===yesterday) return `Yesterday · ${display}`;
+  return `${dayName} · ${display}`;
+}
+
+function getDateKey(ts) {
+  // ts is epoch ms; return "YYYY-MM-DD" in local time
+  return new Date(ts).toISOString().slice(0,10);
+}
+
+function renderDailyMode() {
+  document.getElementById("filterBar").innerHTML = "";
+  document.getElementById("subtopicBar").innerHTML = "";
+
+  // --- Merge saved attempts from Firestore into questions ---
+  // This makes data persist across logout/login
+  const mergedQuestions = dailyQuestions.map(q => {
+    const saved = myDailyAttempts[q.id];
+    if(saved) {
+      return {
+        ...q,
+        _answered: saved.answered,
+        _correct: saved.correct,
+        _userAns: saved.userAnswer,
+        _attempts: saved.attempts,
+        _outOfAttempts: saved.outOfAttempts || false
+      };
+    }
+    return q;
+  });
+
+  // --- Group questions by date ---
+  const groups = {}; // { "YYYY-MM-DD": [q, ...] }
+  mergedQuestions.forEach(q => {
+    const dk = q.date || getDateKey(q.ts || Date.now());
+    if(!groups[dk]) groups[dk] = [];
+    groups[dk].push(q);
+  });
+
+  // Get sorted unique dates (newest first)
+  const allDates = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  // If selectedDailyDate has no questions, default to most recent with questions (or today)
+  if(allDates.length && !groups[selectedDailyDate]) {
+    // don't override — user may be looking at a future date to add
+  }
+
+  // Compute stats for selected date
+  const selectedQs = groups[selectedDailyDate] || [];
+  const totalAll = mergedQuestions.length;
+  let correct=0, wrong=0, attempted=0;
+  selectedQs.forEach(q => {
+    if(q._answered) { attempted++; if(q._correct) correct++; else wrong++; }
+  });
+
+  // Stats bar
+  document.getElementById("statsBar").innerHTML = `
+    <div class="daily-stats-grid" style="width:100%">
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--accent2)">${selectedQs.length}</div>
+        <div class="daily-stat-lbl">Selected Day</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--green)">${correct}</div>
+        <div class="daily-stat-lbl">Correct</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--red)">${wrong}</div>
+        <div class="daily-stat-lbl">Wrong</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--muted)">${selectedQs.length-attempted}</div>
+        <div class="daily-stat-lbl">Pending</div>
+      </div>
+      <div class="daily-stat-card">
+        <div class="daily-stat-num" style="color:var(--text)">${totalAll}</div>
+        <div class="daily-stat-lbl">All Time</div>
+      </div>
+    </div>`;
+
+  // Upload section
+  document.getElementById("uploadSection").innerHTML = `
+    <div class="upload-card">
+      <div class="upload-toggle" onclick="toggleDailyUpload()">
+        <h3>⚡ Add Question for <span style="color:var(--accent2)">${selectedDailyDate===getTodayStr()?'Today':''+selectedDailyDate}</span>
+          <span style="font-size:0.72rem;color:var(--muted);font-weight:400"> — rough practice</span></h3>
+        <span class="toggle-arr" id="dailyUploadArr">▼</span>
+      </div>
+      <div id="dailyUploadBody" style="display:none;margin-top:12px">
+        <div class="modal-field">
+          <label>Question / Code snippet *</label>
+          <textarea class="up-textarea" id="dq" rows="3" placeholder="Paste question or code here..."></textarea>
+        </div>
+        <div class="modal-field">
+          <label>Expected Answer (optional — used for validation)</label>
+          <textarea class="up-textarea" id="da" rows="2" placeholder="Expected output or answer..."></textarea>
+        </div>
+        <div class="upload-footer">
+          <span class="added-count" id="dailyAddedCount"></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-add-more" onclick="addDailyQ(true)">Save &amp; Add Another</button>
+            <button class="btn-add" onclick="addDailyQ(false)">Save →</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // Date navigation bar
+  const today = getTodayStr();
+  // Build pill list: today + all dates that have questions (deduped, sorted desc)
+  const pillDates = [...new Set([today, ...allDates])].sort((a,b)=>b.localeCompare(a)).slice(0,10);
+
+  const dateBar = `
+    <div class="daily-date-bar">
+      <span class="daily-date-label">📆 Date</span>
+      <input type="date" class="daily-date-input" value="${selectedDailyDate}"
+        max="${today}" onchange="setDailyDate(this.value)"/>
+      <div class="daily-date-pills">
+        ${pillDates.map(d => {
+          const cnt = (groups[d]||[]).length;
+          const isToday = d===today;
+          const label = d===today ? 'Today' : d===new Date(Date.now()-86400000).toISOString().slice(0,10) ? 'Yesterday' :
+            new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+          return `<button class="date-pill ${d===selectedDailyDate?'active':''}" onclick="setDailyDate('${d}')">
+            ${isToday?'📅 ':''}${label}${cnt?`<span class="pill-cnt">${cnt}</span>`:''}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Question cards
+  const area = document.getElementById("questionArea");
+
+  if(!selectedQs.length) {
+    area.innerHTML = dateBar + `
+      <div class="no-daily-qs">
+        <div class="nd-icon">📭</div>
+        <div class="nd-msg">No questions for ${formatDateDisplay(selectedDailyDate)}</div>
+        <div class="nd-sub">Add a question above or pick a different date.</div>
+      </div>`;
+    return;
+  }
+
+  let cardNum = 1;
+  const cards = selectedQs.map(q => {
+    const answered = q._answered;
+    const isCorrect = q._correct;
+    const attempts = q._attempts || 0;
+    const attemptsLeft = MAX_DAILY_ATTEMPTS - attempts;
+    const wrongButRetrying = !answered && attempts > 0; // wrong, attempts remain
+    const outOfAttempts = q._outOfAttempts;
+
+    const statusChip = !answered
+      ? (wrongButRetrying
+          ? `<span class="dq-status-chip s-wrong">✗ Try again (${attemptsLeft} left)</span>`
+          : `<span class="dq-status-chip s-pending">Pending</span>`)
+      : isCorrect
+        ? `<span class="dq-status-chip s-correct">✓ Correct</span>`
+        : `<span class="dq-status-chip s-wrong">✗ Incorrect</span>`;
+
+    return `<div class="dq-card ${answered?(isCorrect?'dq-correct':'dq-wrong'):''}" id="dcard_${q.id}">
+      <div class="dq-header">
+        <div class="dq-num-badge">${cardNum++}</div>
+        <span style="font-size:0.72rem;color:var(--muted)">Daily Practice</span>
+        ${q.addedBy ? `<span class="dq-added-by">· 👤 ${esc(q.addedBy)}</span>` : ''}
+        ${statusChip}
+      </div>
+      <div class="dq-body">
+        <div class="dq-question-label">Question</div>
+        <div class="dq-question-text">${esc(q.q)}</div>
+        <div class="dq-attempts-label">Your Answer</div>
+        <textarea class="dq-textarea" id="dans_${q.id}" rows="2"
+          placeholder="Type your answer here..."
+          ${answered?'disabled':''}>${answered?(q._userAns||''):(q._userAns||'')}</textarea>
+        ${q.answer && answered ? `
+        <div class="dq-answer-section">
+          <div class="dq-answer-label">✓ Expected Answer</div>
+          <div class="dq-answer-box">${esc(q.answer)}</div>
+        </div>` : ''}
+      </div>
+      <div class="dq-footer">
+        <div class="dq-footer-left">
+          ${answered
+            ? (outOfAttempts
+                ? `<span class="dq-result-text wrong">❌ Out of attempts</span>`
+                : `<span class="dq-result-text ${isCorrect?'correct':'wrong'}">${isCorrect?'✅ Correct!':'❌ Incorrect'}</span>`)
+            : (wrongButRetrying
+                ? `<span class="dq-result-text wrong">❌ Incorrect — ${attemptsLeft} attempt${attemptsLeft!==1?'s':''} left</span>`
+                : `<span style="font-size:0.75rem;color:var(--muted)">Submit when ready</span>`)}
+        </div>
+        <div class="dq-footer-right">
+          ${!answered ? `<button class="btn-check" onclick="checkDailyQ('${q.id}')">✅ Check Answer</button>` : ''}
+          <button class="btn-del-daily" onclick="delDailyQ('${q.id}')">🗑 Remove</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const dateHeading = `
+    <div class="daily-date-group">
+      <div class="daily-date-heading">
+        <div class="dh-line"></div>
+        <div class="dh-badge ${selectedDailyDate===today?'today':''}">
+          ${formatDateDisplay(selectedDailyDate)}
+          <span class="dh-count">${selectedQs.length} Q${selectedQs.length!==1?'s':''}</span>
+        </div>
+        <div class="dh-line"></div>
+      </div>
+    </div>`;
+
+  area.innerHTML = dateBar + dateHeading + cards;
+
+  // ── ADMIN: show all users' attempts for this date ──
+  if(currentUser === ADMIN_USER) {
+    // Filter attempts for selected date
+    const dateAttempts = Object.values(allUsersDailyAttempts)
+      .filter(a => a.date === selectedDailyDate);
+
+    let adminHtml = `
+      <div class="admin-panel" style="margin-top:20px">
+        <div class="admin-panel-header">
+          <div class="admin-panel-title">👑 User Daily Attempts — ${formatDateDisplay(selectedDailyDate)}</div>
+        </div>`;
+
+    if(!dateAttempts.length) {
+      adminHtml += `<div style="color:var(--muted);font-size:0.82rem;padding:8px 0">⏳ No users have attempted daily questions on this date yet.</div>`;
+    } else {
+      // Group by username
+      const byUser = {};
+      dateAttempts.forEach(a => {
+        if(!byUser[a.username]) byUser[a.username] = [];
+        byUser[a.username].push(a);
+      });
+
+      Object.keys(byUser).sort().forEach(u => {
+        const reg = allUsersRegistry[u] || {};
+        const displayName = (reg.displayName || u).replace(/_/g," ");
+        const attempts = byUser[u];
+        const correct = attempts.filter(a => a.correct).length;
+        const wrong = attempts.filter(a => a.answered && !a.correct).length;
+        const pending = attempts.filter(a => !a.answered).length;
+
+        adminHtml += `
+          <div style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="background:rgba(79,127,255,0.08);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+              <span class="user-chip-inline">👤 ${esc(displayName)}</span>
+              <span style="font-size:0.75rem;color:var(--green);font-weight:600">✅ ${correct} correct</span>
+              <span style="font-size:0.75rem;color:var(--red);font-weight:600">❌ ${wrong} wrong</span>
+              ${pending ? `<span style="font-size:0.75rem;color:var(--muted)">⏳ ${pending} pending</span>` : ''}
+            </div>
+            <div style="padding:10px;display:flex;flex-direction:column;gap:8px">
+              ${attempts.map((a, i) => {
+                const resultColor = a.answered ? (a.correct ? 'var(--green)' : 'var(--red)') : 'var(--accent)';
+                const resultLabel = a.answered
+                  ? (a.correct ? '✅ Correct' : (a.outOfAttempts ? '❌ Out of attempts' : '❌ Wrong'))
+                  : '⏳ In progress';
+                const resultBg = a.answered
+                  ? (a.correct ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)')
+                  : 'rgba(79,127,255,0.08)';
+                return `<div style="background:${resultBg};border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap">
+                    <span style="font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase">Q${i+1}</span>
+                    <span style="font-size:0.72rem;font-weight:600;color:${resultColor}">${resultLabel}</span>
+                    <span style="font-size:0.68rem;color:var(--muted)">${a.attempts||0}/${MAX_DAILY_ATTEMPTS} attempts</span>
+                  </div>
+                  <div style="font-size:0.78rem;color:var(--text);background:rgba(0,0,0,0.2);border-radius:6px;padding:6px 8px;margin-bottom:6px;white-space:pre-wrap;word-break:break-word">${esc((a.question||"").slice(0,120))}${(a.question||"").length>120?'…':''}</div>
+                  <div style="font-size:0.7rem;color:var(--muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em">Their answer</div>
+                  <div style="font-size:0.8rem;color:var(--text);font-family:monospace;background:rgba(0,0,0,0.15);border-radius:6px;padding:5px 8px;word-break:break-word">${esc(a.userAnswer||"—")}</div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+      });
+    }
+
+    adminHtml += `</div>`;
+    area.innerHTML += adminHtml;
+  }
+}
+
+function setDailyDate(d) {
+  selectedDailyDate = d;
+  renderDailyMode();
+}
+
+let dailyUploadVisible = false;
+function toggleDailyUpload() {
+  dailyUploadVisible = !dailyUploadVisible;
+  const body = document.getElementById("dailyUploadBody");
+  const arr = document.getElementById("dailyUploadArr");
+  if(body) body.style.display = dailyUploadVisible ? "block" : "none";
+  if(arr) arr.classList.toggle("open", dailyUploadVisible);
+}
+
+let dailyAddedCount = 0;
+function addDailyQ(stayOpen) {
+  const q = document.getElementById("dq").value.trim();
+  const a = document.getElementById("da").value.trim();
+  if(!q) { alert("Please enter a question!"); return; }
+  const id = "dq_" + Date.now();
+  db.collection("daily").doc(id).set({
+    id, q, answer:a||"", addedBy:currentUser,
+    ts: Date.now(),
+    date: selectedDailyDate   // ← store date string for grouping
+  });
+  dailyAddedCount++;
+  document.getElementById("dq").value="";
+  document.getElementById("da").value="";
+  const c = document.getElementById("dailyAddedCount");
+  if(c) c.textContent = `✅ ${dailyAddedCount} added`;
+  if(!stayOpen) { dailyAddedCount=0; toggleDailyUpload(); }
+}
+
+const MAX_DAILY_ATTEMPTS = 3;
+
+function checkDailyQ(id) {
+  const q = dailyQuestions.find(x=>x.id===id);
+  if(!q) return;
+  const userAns = (document.getElementById("dans_"+id)||{}).value||"";
+  let isCorrect = false;
+  if(q.answer) {
+    isCorrect = userAns.trim().toLowerCase() === q.answer.trim().toLowerCase();
+  } else {
+    // No expected answer — treat as correct (free-form practice)
+    isCorrect = true;
+  }
+
+  // Get current attempt count from saved state
+  const prev = myDailyAttempts[id] || {};
+  const attempts = (prev.attempts || 0) + 1;
+
+  let answered, correct, outOfAttempts;
+  if(isCorrect) {
+    answered = true; correct = true; outOfAttempts = false;
+  } else if(attempts >= MAX_DAILY_ATTEMPTS) {
+    answered = true; correct = false; outOfAttempts = true;
+  } else {
+    answered = false; correct = false; outOfAttempts = false;
+  }
+
+  // Update local cache immediately
+  myDailyAttempts[id] = {
+    username: currentUser,
+    questionId: id,
+    question: q.q,
+    date: q.date || getDateKey(q.ts || Date.now()),
+    userAnswer: userAns,
+    correct,
+    answered,
+    outOfAttempts,
+    attempts,
+    ts: Date.now()
+  };
+
+  // ── Always persist to Firestore (every attempt, not just final) ──
+  db.collection("dailyAttempts").doc(currentUser + "_" + id).set(myDailyAttempts[id]);
+
+  // ── Link to progress on EVERY attempt (not just when fully answered) ──
+  // This way admin always sees daily activity in progress bar
+  userProgress[id] = true;
+  saveProgress(id, true);
+
+  renderDailyMode();
+}
+
+function delDailyQ(id) {
+  if(!confirm("Remove this daily question?")) return;
+  db.collection("daily").doc(id).delete();
+}
+
+function clearAllDaily() {
+  if(!confirm("Clear ALL daily practice questions across all dates? This cannot be undone.")) return;
+  const batch = db.batch();
+  dailyQuestions.forEach(q => batch.delete(db.collection("daily").doc(q.id)));
+  batch.commit();
+}
+
+function clearDateDaily() {
+  const dateQs = dailyQuestions.filter(q => (q.date || getDateKey(q.ts||Date.now())) === selectedDailyDate);
+  if(!dateQs.length) return;
+  if(!confirm(`Clear all ${dateQs.length} questions for ${formatDateDisplay(selectedDailyDate)}?`)) return;
+  const batch = db.batch();
+  dateQs.forEach(q => batch.delete(db.collection("daily").doc(q.id)));
+  batch.commit();
+}
+
+function renderStats() {
+  const all = getAllQ();
+  const tabQs = all.filter(q=>q.tab===activeTab);
+  const tabDone = tabQs.filter(q=>userProgress[q.id]).length;
+  document.getElementById("statsBar").innerHTML = `
+    <div class="stat-item"><div class="stat-num" style="color:var(--accent)">${tabQs.length}</div><div class="stat-lbl">This Tab</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--green)">${tabDone}</div><div class="stat-lbl">Completed</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--accent2)">${tabQs.length-tabDone}</div><div class="stat-lbl">Remaining</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--text)">${all.length}</div><div class="stat-lbl">Total Qs</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:var(--green)">${all.filter(q=>userProgress[q.id]).length}</div><div class="stat-lbl">Total Done</div></div>`;
+}
+
+function renderFilterBar() {
+  document.getElementById("filterBar").innerHTML = `
+    <input class="search-input" placeholder="🔍 Search..." oninput="onSearch(this.value)" value="${searchTerm}"/>
+    <button class="filter-btn ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">All</button>
+    <button class="filter-btn f-done ${activeFilter==='done'?'active':''}" onclick="setFilter('done')">✅ Done</button>
+    <button class="filter-btn f-pend ${activeFilter==='pending'?'active':''}" onclick="setFilter('pending')">⏳ Pending</button>`;
+}
+
+function renderSubtopicBar() {
+  const tabQs = getAllQ().filter(q=>q.tab===activeTab);
+  const subtopics = [...new Set(tabQs.map(q=>q.subtopic||"General"))];
+  if(subtopics.length <= 1) { document.getElementById("subtopicBar").innerHTML=""; return; }
+  const counts = {};
+  tabQs.forEach(q=>{ const k=q.subtopic||"General"; counts[k]=(counts[k]||0)+1; });
+  document.getElementById("subtopicBar").innerHTML =
+    `<button class="sub-btn ${activeSubtopic==='all'?'active':''}" onclick="setSubtopic('all')">All <span class="sub-cnt">${tabQs.length}</span></button>` +
+    subtopics.map(s=>`<button class="sub-btn ${activeSubtopic===s?'active':''}" onclick="setSubtopic('${s.replace(/'/g,"\\'")}')">
+      ${esc(s)} <span class="sub-cnt">${counts[s]||0}</span></button>`).join("");
+}
+
+function setSubtopic(s){ activeSubtopic=s; renderSubtopicBar(); renderQuestions(); }
+function setFilter(f){activeFilter=f;renderAll();}
+function onSearch(v){searchTerm=v.toLowerCase();renderAll();}
+
+function getSubtopicsForTab(tabId) {
+  return [...new Set(getAllQ().filter(q=>q.tab===tabId).map(q=>q.subtopic||"General"))];
+}
+
+function renderUpload() {
+  const subtopics = getSubtopicsForTab(activeTab);
+  document.getElementById("uploadSection").innerHTML = `
+    <div class="upload-card">
+      <div class="upload-toggle" onclick="toggleUpload()">
+        <h3>➕ Add Question <span style="font-size:0.72rem;color:var(--green);font-weight:400">(shared with everyone)</span></h3>
+        <span class="toggle-arr ${uploadOpen?'open':''}">▼</span>
+      </div>
+      ${uploadOpen ? `
+      <div class="upload-body">
+        <div class="upload-hint">Fill in the fields below. Options are optional (one per line).</div>
+        <div class="modal-field">
+          <label>Question *</label>
+          <textarea class="up-textarea" id="uq" placeholder="Type your question here..." rows="2"></textarea>
+        </div>
+        <div class="upload-grid">
+          <div class="modal-field" style="margin:0">
+            <label>Options (one per line)</label>
+            <textarea class="up-textarea" id="uopts" placeholder="A. Option 1&#10;B. Option 2&#10;C. Option 3&#10;D. Option 4" rows="4"></textarea>
+          </div>
+          <div class="modal-field" style="margin:0">
+            <label>Answer / Explanation *</label>
+            <textarea class="up-textarea" id="ua" placeholder="Correct answer and explanation..." rows="4"></textarea>
+          </div>
+        </div>
+        <div class="upload-grid" style="margin-top:8px">
+          <div class="modal-field" style="margin:0">
+            <label>Subtopic (select existing or type new)</label>
+            <input class="up-input" id="usub" placeholder="e.g. Number Series" list="subtopic-list" autocomplete="off"/>
+            <datalist id="subtopic-list">
+              ${subtopics.map(s=>`<option value="${esc(s)}"></option>`).join("")}
+            </datalist>
+          </div>
+          <div class="modal-field" style="margin:0">
+            <label>Tab</label>
+            <select class="up-select" id="utab">
+              ${TABS.map(t=>`<option value="${t.id}" ${t.id===activeTab?'selected':''}>${t.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="modal-field" style="margin-top:8px">
+          <label>Source (optional)</label>
+          <input class="up-input" id="usrc" placeholder="e.g. PrepInsta, GFG, etc."/>
+        </div>
+        <div class="upload-footer" style="margin-top:10px">
+          <span class="added-count" id="addedCount"></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-add-more" onclick="addQ(true)">Save &amp; Add Another</button>
+            <button class="btn-add" onclick="addQ(false)">Save →</button>
+          </div>
+        </div>
+      </div>` : ''}
+    </div>`;
+}
+
+let addedCount = 0;
+function toggleUpload(){ uploadOpen=!uploadOpen; renderUpload(); }
+
+function addQ(stayOpen) {
+  const q=document.getElementById("uq").value.trim();
+  const a=document.getElementById("ua").value.trim();
+  const optsRaw=document.getElementById("uopts").value.trim();
+  const sub=document.getElementById("usub").value.trim()||"Custom";
+  const tab=document.getElementById("utab").value;
+  const src=document.getElementById("usrc").value.trim()||"Added by "+currentUser;
+  if(!q){alert("Please enter a question!"); return;}
+  const options = optsRaw ? optsRaw.split("\n").map(s=>s.trim()).filter(Boolean) : null;
+  const id="cq_"+Date.now();
+  const newQ={id,tab,subtopic:sub,q,answer:a,source:src,addedBy:currentUser};
+  if(options && options.length) newQ.options=options;
+  saveExtraQuestion(newQ);
+  addedCount++;
+  if(stayOpen) {
+    // clear fields but keep subtopic/tab/source
+    document.getElementById("uq").value="";
+    document.getElementById("ua").value="";
+    document.getElementById("uopts").value="";
+    const c=document.getElementById("addedCount");
+    if(c) c.textContent=`✅ ${addedCount} question(s) added`;
+  } else {
+    addedCount=0;
+    activeTab=tab;
+    uploadOpen=false;
+    renderAll();
+  }
+}
+
+function renderQuestions() {
+  const area=document.getElementById("questionArea");
+  let qs=getAllQ().filter(q=>q.tab===activeTab);
+  if(activeSubtopic!=="all") qs=qs.filter(q=>(q.subtopic||"General")===activeSubtopic);
+  if(activeFilter==="done") qs=qs.filter(q=>userProgress[q.id]);
+  if(activeFilter==="pending") qs=qs.filter(q=>!userProgress[q.id]);
+  if(searchTerm) qs=qs.filter(q=>
+    q.q.toLowerCase().includes(searchTerm)||
+    (q.subtopic||"").toLowerCase().includes(searchTerm)||
+    (q.answer||"").toLowerCase().includes(searchTerm));
+
+  if(!qs.length){area.innerHTML=`<div class="no-qs">No questions found.</div>`;return;}
+
+  const groups={};
+  qs.forEach(q=>{const k=q.subtopic||"General";if(!groups[k])groups[k]=[];groups[k].push(q);});
+
+  let num=1;
+  area.innerHTML=Object.keys(groups).map(sub=>{
+    const cards=groups[sub].map(q=>{
+      const done=!!userProgress[q.id];
+      return `<div class="q-card ${done?'done':''}" id="card_${q.id}">
+        <div class="q-num">${num++}</div>
+        <div class="q-body">
+          <div class="q-text">${esc(q.q)}</div>
+          ${q.options?`<div class="q-opts">${q.options.map(o=>`<div class="q-opt">${esc(o)}</div>`).join("")}</div>`:""}
+          <div class="q-answer">${esc(q.answer||"")}</div>
+          <div class="q-meta">
+            <span class="q-tag">${esc(q.subtopic||"")}</span>
+            <span class="q-src">📌 ${esc(q.source||"")}</span>
+            ${q.addedBy?`<span class="q-tag" style="background:#2a1f40;color:#b088ff">👤 ${esc(q.addedBy)}</span>`:""}
+          </div>
+          <div class="q-actions">
+            <button class="btn-sm btn-ans" onclick="toggleAns('${q.id}')">💡 Answer</button>
+            <button class="btn-sm btn-done-q" onclick="toggleDone('${q.id}')">${done?'✅ Done':'Mark Done'}</button>
+            <button class="btn-sm" style="border-color:#7a80a0;color:#7a80a0" onclick="openEdit('${q.id}')">✏️ Edit</button>
+            <button class="btn-sm btn-del" onclick="delQ('${q.id}')">🗑 Delete</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+    return activeSubtopic==="all"
+      ? `<div class="sec-label">${sub}</div><div class="q-list">${cards}</div>`
+      : `<div class="q-list">${cards}</div>`;
+  }).join("");
+}
+
+// ── EDIT MODAL ───────────────────────────────
+function openEdit(id) {
+  const all = getAllQ();
+  const q = all.find(x=>x.id===id);
+  if(!q) return;
+  document.getElementById("editId").value = id;
+  document.getElementById("editQ").value = q.q||"";
+  document.getElementById("editOpts").value = q.options ? q.options.join("\n") : "";
+  document.getElementById("editAns").value = q.answer||"";
+  document.getElementById("editSub").value = q.subtopic||"";
+  document.getElementById("editSrc").value = q.source||"";
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal(e) {
+  if(!e || e.target === document.getElementById("editModal")) {
+    document.getElementById("editModal").style.display = "none";
+  }
+}
+
+function saveEdit() {
+  const id = document.getElementById("editId").value;
+  const q = document.getElementById("editQ").value.trim();
+  const optsRaw = document.getElementById("editOpts").value.trim();
+  const ans = document.getElementById("editAns").value.trim();
+  const sub = document.getElementById("editSub").value.trim();
+  const src = document.getElementById("editSrc").value.trim();
+  if(!q) { alert("Question cannot be empty!"); return; }
+
+  // Find original to preserve tab, addedBy, etc.
+  const all = getAllQ();
+  const orig = all.find(x => x.id === id);
+  if(!orig) { alert("Question not found!"); return; }
+
+  const options = optsRaw ? optsRaw.split("\n").map(s=>s.trim()).filter(Boolean) : null;
+  const updated = { ...orig, q, answer:ans, subtopic:sub||"General", source:src };
+  if(options && options.length) updated.options = options;
+  else delete updated.options;
+
+  // Built-in questions get saved to Firestore as extra (overrides)
+  saveExtraQuestion(updated);
+  document.getElementById("editModal").style.display = "none";
+  renderAll();
+}
+
+// ── QUESTION ACTIONS ─────────────────────────
+function toggleAns(id) {
+  const card = document.getElementById("card_" + id);
+  if(card) card.classList.toggle("show-ans");
+}
+
+function toggleDone(id) {
+  const isDone = !!userProgress[id];
+  if(isDone) {
+    delete userProgress[id];
+    saveProgress(id, false);
+  } else {
+    userProgress[id] = true;
+    saveProgress(id, true);
+  }
+  // Re-render just this card for snappy UX
+  renderQuestions();
+  renderStats();
+  renderTabs();
+}
+
+function delQ(id) {
+  if(!confirm("Delete this question? This cannot be undone.")) return;
+  // Remove from extra questions (Firestore)
+  deleteExtraQuestion(id);
+  // Also remove from progress if marked done
+  if(userProgress[id]) {
+    delete userProgress[id];
+    saveProgress(id, false);
+  }
+  renderAll();
+}
+
+// ── UTILITY ──────────────────────────────────
+function esc(str) {
+  if(!str) return "";
+  return String(str)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+</script>
+</body>
+</html>
